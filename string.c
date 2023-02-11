@@ -6,14 +6,20 @@
  * Cause C strings are so pesky
  */
 
-void string_length_test();
+void strlen_test();
 void snprintf_test();
 void strcmp_test();
+void printf_test();
+void return_strings();
+void char_array_test();
 char *return_string_literal();
 char *return_string_array();
 char *return_string_pointer();
+char *return_string_snprintf();
+void print_alphabet();
+void print_ascii_table();
 
-int main () {
+int main() {
 
 	char *multiline = "one line\
 			   two line\
@@ -23,26 +29,14 @@ int main () {
 		fprintf(stderr, "Unable to print multiline error\n");
 	}
 
-	char *ret = return_string_literal();
-	if (strcmp(ret, "return string") != 0) {
-		printf("Not able to return string literal from function");
-	}
 
-	ret = return_string_pointer();
-	if (strcmp(ret, "return_string_pointer") != 0) 
-		fprintf(stderr, "Not able to return char pointer from function");
-
-
-	ret = return_string_array();
-	for(int i = 0; i < 3; ++i) {
-		if (ret[i] != 'z') {
-			fprintf(stderr, "Not able to return buffer from function\n");
-		}
-	}
+	printf_test();
 
 	/*
+	return_strings();
+
+	strlen_test();
 	strcmp_test();
-	string_length_test();
 	snprintf_test();
 	*/
 
@@ -85,7 +79,7 @@ void strcmp_test() {
 	}
 }
 
-void string_length_test() {
+void strlen_test() {
 	char *a;
 	char *b = "";
 	char *c = "\0";
@@ -99,6 +93,25 @@ void string_length_test() {
 	if(strlen(apple) != strlen(null_terminated_apple)) {
 		printf("Expecting null terminated string to be same length as terminated string\n");
 	}
+
+	if (strlen("abc") != 3) {
+		fprintf(stderr, "Cannot find length of string literal\n");
+	}
+
+	/*
+	 * Seg fault, must pass char pointer
+	*/
+	char buf[69] = {'a', 'b', 'c', '\0'};
+	if(strlen(buf) != 3) {
+		fprintf(stderr, "Unable to find strlen of declared buffer\n");
+	}
+
+	char *x = "\0abc";
+	char *y = "a\0bc";
+	char *z = "abc\0";
+
+	if ((strlen(x) != 0) && (strlen(y) != 1) && (strlen(z) != 3)) 
+		fprintf(stderr, "Expecting strlen to stop counting at first null terminator\n");
 }
 
 void snprintf_test() {
@@ -165,3 +178,97 @@ char* return_string_array() {
 	return ptr;
 }
 
+char*  return_string_snprintf() {
+	char buf[4];
+	char *x = "abc";
+	snprintf(buf, sizeof(char) * 4, "%s", x);
+	char *ptr = buf;
+	return ptr;
+}
+
+/**
+ * Test how strings are returned from functions
+ * stack vs heap
+ */
+void return_strings() {
+	char *ret = return_string_literal();
+	if (strcmp(ret, "return string") != 0) {
+		printf("Not able to return string literal from function");
+	}
+
+	ret = return_string_pointer();
+	if (strcmp(ret, "return_string_pointer") != 0) 
+		fprintf(stderr, "Not able to return char pointer from function");
+
+
+	ret = return_string_array();
+	for(int i = 0; i < 3; ++i) {
+		if (ret[i] != 'z') {
+			fprintf(stderr, "Not able to return buffer from function\n");
+		}
+	}
+
+	ret = return_string_snprintf();
+	if (strcmp(ret, "abc") != 0) 
+		fprintf(stderr, "failed to return snprintf buffer from function\n");
+
+}
+
+/**
+ * Tests to see what these strings look like when printing them
+ */
+void printf_test() {
+	printf("Null terminator char = %c\n", '\0');
+
+	// Not null terminating this will produce weird output
+	char buf[69] = {'a', 'b', 'c', '\0'};
+	printf("Expect null terminated char array %s to equal abc\n", buf);
+
+	char empty[10];
+	printf("Empty char array %s\n", empty); 
+	char nil[5] = {'\0'};
+	printf("Expect empty null terminated char array %s to equal %c\n", nil, '\0');
+
+	char *x = "nice";
+	printf("Expect char pointer %s to equal nice\n", x);
+
+	print_alphabet();
+	print_ascii_table();
+}
+
+
+void char_array_test() {
+	// char array
+	char buf[4] = {'a', 'b', 'c', '\0'};
+	printf("%s\n", buf);
+
+	// iterate over buffer
+	char *ptr = buf;
+	while (*ptr != '\0') {
+		printf("%c", *ptr);
+		ptr++;
+	}
+	printf("\n");
+}
+
+/**
+ * Prints values 33 - 126
+ * 0-32 are non-printing characters
+ * 127 is DEL character
+ */
+void print_ascii_table() {
+	for (int i = 0; i < 128; ++i) {
+		printf("%c", i);
+	}
+	printf("\n");
+}
+
+/**
+ * Alphabet is 65-122 in ASCII table
+ */
+void print_alphabet() {
+	for (int i = 65; i <= 122; ++i) {
+		printf("%c", i);
+	}
+	printf("\n");
+}

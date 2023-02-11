@@ -3,8 +3,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
+#include <execinfo.h>
 
 /**
  * Buffer sizes
@@ -47,18 +49,6 @@ struct Error {
 	int err_num;
 };
 
-/**
- * TS
- * Gracefully exit the program
- * Accessible from anywhere
- * throw stack
- */
-void fail(struct Error error) {
-	if (error.err_num != 0) {
-		const char *msg = gai_strerror(error.err_num); 
-		fprintf(stderr, "getaddrinfo: %s\n", msg);
-	}
-};
 		
 
 /**
@@ -93,6 +83,10 @@ void print_sockets(struct addrinfo *addy_info);
 void print_socket(struct addrinfo *addy_info);
 char* sockaddr_tostring(struct sockaddr *sockaddy);
 
+// Helper functions
+void print_callstack();
+void handle_snprintf(int ret, size_t size);
+void fail();
 
 int main() {
 	int fd;
@@ -101,6 +95,7 @@ int main() {
 	/**
 	  * Beej Guide
 	  * "anyone who says TCP never arrives out of order I wont listen lalala"
+	  * AF = address family
 	  * memset(&hints, 0, sizeof(addrinfo));
 	  * hints.ai_family = AF_INET6; 
 	  * hints.ai_socktype = SOCK_DGRAM;
@@ -163,27 +158,44 @@ int main() {
 
 /*
  * Print out the contents of the sockaddr structure
+ * String is allocated on the heap dynamically
+ * So the string returned should be freed after usage is finished
  * I think it's in sys/socket.h
  */
-char *sockaddr_tostring(struct sockaddr *sockaddy) {
+char* sockaddr_tostring(struct sockaddr *sockaddy) {
 	char *family;
-	if (sockaddy->sa_family == AF_INET) 
+	if (sockaddy->sa_family == AF_INET) {
 		family = "IPv4";
-	else if (sockaddy->sa_family == AF_INET6)
+	}
+	else if (sockaddy->sa_family == AF_INET6) {
 		family = "IPv6";
-	else 
+	}
+	else { 
 		family = "Unknown family";
+	}
+
+	/**
+	 * inet_ntop: Convert binary numbers to IP address
+	 * 	ntop: network to printable or network text presentation
+	 */
+	char host[SMALL];
+	inet_ntop(sockaddy->sa_family,
+		sockaddy->sa_data,
+		host,
+		sizeof(char) * SMALL);
 		
-	char buffer[MEDIUM];
-	snprintf(buffer, sizeof(char) * MEDIUM,
+	char *buffer = malloc(sizeof(char) * MEDIUM);
+	int ret = snprintf(buffer, sizeof(char) * MEDIUM,
 		 "struct sockaddr {\n\
 	         \tfamily = %i %s\n\
 	         \tdata = %s\n\
 	         }\n",
 	       sockaddy->sa_family, family,
-	       sockaddy->sa_data);
-	char *ptr = buffer;
-	return ptr;
+	       host);
+	handle_snprintf(ret, sizeof(char) * MEDIUM);
+
+	printf("buffer = %s\n", buffer);
+	return buffer;
 }
 
 /**
@@ -203,6 +215,10 @@ void print_socket(struct addrinfo *addy_info) {
 	char *family, *socktype, *protocol;
 	if (addy_info->ai_family == PF_UNSPEC)
 		family = "Will accept any protocol supported by OS";
+	else if (addy_info->ai_family == AF_INET)
+		family = "IPv4 addresses only";
+	else if (addy_info->ai_family == AF_INET6)
+		family = "IPv6 addresses only";
 	else
 		family = "Unknown family";
 
@@ -227,6 +243,7 @@ void print_socket(struct addrinfo *addy_info) {
 		protocol = "Unknown protocol";
 
 
+	char *sockaddr_str = sockaddr_tostring(addy_info->ai_addr);
 
 	printf("struct addrinfo {\n\
 		       \tflags = %i\n\
@@ -241,10 +258,76 @@ void print_socket(struct addrinfo *addy_info) {
 	       addy_info->ai_socktype, socktype,
 	       addy_info->ai_protocol, protocol,
 	       addy_info->ai_addrlen, 
-	       sockaddr_tostring(addy_info->ai_addr),
+	       sockaddr_str,
 	       addy_info->ai_canonname);
 
+	free(sockaddr_str);
+
 }
+
+/**
+ * Print the current callstack
+ * Useful for tracing back steps when debugging
+ * man backtrace
+ * execinfo.h file
+ */
+void print_callstack() {
+	void *buf[LARGE];
+	/**
+	 * @param buf will write addresses of current callstack as array of pointers to this value
+	 * @param size set MAX number of pointers to write
+	 * @return number of pointers actually written to array
+	 */
+	int stack_size = backtrace(buf, sizeof(char) * LARGE);
+	/**
+	 * convert call stack from backtrace into human readable strings using dladdr
+	 * @param buf pointers containing addresses of current callstack
+	 * @param size determins size of array of strings that is returned
+	 * @returns array of human readable strings describing the stack
+	 */
+	char **stack = backtrace_symbols(buf, stack_size);
+	for (int i = 0; i < stack_size; ++i) {
+		printf("%s\n", stack[i]);
+	}
+	/**
+	 * backtrace_symbols allocates memory for array of human readable strings using malloc
+	 * so up to us to release the memory when finished
+	 */
+	free(stack);
+}
+
+/**
+ * TODO: integrate with Fail
+ * Output from snprintf is always null terminated
+ * @param ret return value from snprintf
+ * @param size size argument passed to snprintf
+ */
+void handle_snprintf(int ret, size_t size) {
+	char *msg = "\0";
+	if (ret >= size) 
+		msg = "str too small, some characters were discarded";
+	else if (size == 0)
+		msg = "str was not null terminated since size is zero";
+	if (strcmp(msg, "\0") != 0) {
+		fprintf(stderr, "snprintf error %s\n", msg);
+		print_callstack();
+	}
+
+}
+
+/**
+ * TS
+ * Gracefully exit the program
+ * Accessible from anywhere
+ * throw stack
+ */
+void fail(struct Error error) {
+	if (error.err_num != 0) {
+		const char *msg = gai_strerror(error.err_num); 
+		fprintf(stderr, "getaddrinfo: %s\n", msg);
+		print_callstack();
+	}
+};
 
 /*
 int fd = make_socket(res) {
