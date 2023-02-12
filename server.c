@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <execinfo.h>
 #include <sys/errno.h>
+#include <sys/socket.h>
 
 /**
  * Buffer sizes
@@ -46,7 +47,7 @@ struct Return {
  * Message
  */
 struct Error {
-	char message[MEDIUM];
+	char *message;
 	int err_num;
 };
 
@@ -83,61 +84,37 @@ struct addyinfo {
 void print_sockets(struct addrinfo *addy_info);
 void print_socket(struct addrinfo *addy_info);
 char* sockaddr_tostring(struct sockaddr *sockaddy);
+void print_ip(struct addrinfo *addr);
+int make_socket(struct addrinfo *potential_host);
 
-// Helper functions
 void print_callstack();
 void handle_snprintf(int ret, size_t size);
 void fail();
-void print_ip(struct addrinfo *addr);
 
 int main() {
-	int fd;
 	struct addyinfo addy_info;
 
 	/**
-	 * Beej Guide
-	 * "anyone who says TCP never arrives out of order I wont listen lalala"
-	 * AF = address family
-	 * memset(&hints, 0, sizeof(addrinfo));
-	 * hints.ai_family = AF_INET6; 
-	 * hints.ai_socktype = SOCK_DGRAM;
-	 * hints.ai_flags = AI_PASSIVE;
+	 * Specify what kind of sockets we want
+	 * @var ai_family: IPv4 or IPv6 but let operating system pick
+	 * @var ai_socktype: TCP or UDP
+	 * @var ai_flags: returned socket will use bind
 	 */
-
-
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = 0;
+	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-
 	/**
-	 * man page
-	 * getaddrinfo gets a list of IP addresses and port names for hostname and servname
-	 * 	- hostname & servname are null pointer or null terminated strings
-	 * 		  TS
-	 * 		  Neither can be null
-	 * 		  One must be string
-	 * 		  Both can be string
-	 * 		  Neither can't be strings
-	 * 	- hostname is valid host name or string IPv4/6 addresss
-	 * 	- servname is port number of service name listed in /etc/services services(5)
-	 TS
-	 char *host = "addy.address"
-	 Map to /etc/hosts localhost
-	 Now go to addy.address in chrome browser
-	 Useful if TLS cert != localhost and running locally
-	 * replaces gethostbyname and getservbyname()
+	 * getaddrinfo returns a linked list of IP address and port names based on hostname and port
 	 */
-	char *host = "127.0.0.1"; //"localhost";
 	struct addrinfo *potential_hosts;
+	char *host = "localhost"; // or "127.0.0.1"
 	char *port = "443";
 	int err_num = 0; 
-	struct Error error;
-	memset(&error, 0, sizeof(struct Error));
 	if ((err_num = getaddrinfo("localhost", "8000", &hints, &potential_hosts)) != 0) {
-		struct Error error = error;
+		struct Error error;
 		error.err_num = err_num;
 		fail(error);
 		return -1;
@@ -145,16 +122,73 @@ int main() {
 
 	print_sockets(potential_hosts);
 
+	int fd = make_socket(potential_hosts);
+	if (fd == -1) {
+		struct Error error;
+		error.message = "Failed to create socket";
+		fail(error);
+		return -1;
+	}
 
-	/*
-	 * Function for actually setting the functions
-	 fd = make_socket(potential_hosts);
-	 if (!fd) return -1;
+	/**
+	 * listen for incomming connections and set queue limit
+	 * @param socket: created from socket(2) 
+	 * @param backlog: max length of queue for pending connections
+	 * 	- ECONNREFUSED will be returned if request arrives when queue is full
+	 * 	- Note the max value of this is 128 as per BUGS section (man listen)
+	 * @returns 0 for success, -1 and sets errno for failure
 	 */
+	int max_connections = 100;
+	if (listen(fd, max_connections) == -1) {
+		perror("listen: \n");
+		close(fd);
+		return -1;
+	}
 
+	/**
+	 * Extracts first connection request on the queue of pending connections
+	 * @param socket a socket that has been created with socket(2), bind(2), and listen(2)
+	 * @param sockaddr pointer to sockaddr this is filled in with connection details of client
+	 * @param addr_len pointer to socklen_t that will be set to length in bytes of address 
+	 * 	- should initially contain amount of space pointed to by param sockaddr
+	 * @returns fd of new socket containing this connection or -1 on failure and sets errno
+	 * 	- this returned socket contains the same properties of the socket passed in
+	 */
+	struct sockaddr new_connection;
+	socklen_t address_len = sizeof(new_connection);
+	int new_fd; 
+	while (1) {
+		if((new_fd = accept(fd, &new_connection, &address_len) == -1)) {
+			perror("accept: \n");
+			continue;
+		}
+		printf("Accepted new conection from %s\n", sockaddr_tostring(&new_connection));
+		if(!fork()) {
+			/**
+			 * @param socket the file descriptor receiving the data
+			 * @param buffer
+			 * @param length
+			 * @param flags
+			 * @return number of bytes received
+			 * 	- 0: if no messages are able to be recieved and peer has performed shutdown
+			 * 	- -1: errno is set
+			 */
+			char buffer[LARGE];
+			int ret = recv(new_fd, buffer, sizeof(char)*LARGE-1, 0);
+			buffer[ret] = '\0';
+			printf("Received %s from client\n", buffer);
+			if (ret == 0) {
+				printf("Should close connection now\n");
+				exit(1);
+			} else if (ret < 0) {
+				printf("recv error: \n");
+				exit(-1);
+			}
+		}
+		close(new_fd);
+	}
 
-
-
+	close(fd);
 	return 0;
 }
 
@@ -206,7 +240,7 @@ char* sockaddr_tostring(struct sockaddr *sockaddy) {
 			   \tfamily = %i %s\n\
 			   \taddress = %s\n\
 			   \tport = %i\n\
-			   }\n",
+			   }",
 			   sockaddy->sa_family, family,
 			   host_str,
 			   htons(port));
@@ -221,7 +255,6 @@ char* sockaddr_tostring(struct sockaddr *sockaddy) {
 void print_sockets(struct addrinfo *addy_info) {
 	while(addy_info) {
 		print_socket(addy_info);
-		print_ip(addy_info);
 		addy_info = addy_info->ai_next;
 	}
 }
@@ -374,12 +407,50 @@ void print_ip(struct addrinfo *p) {
 	printf("  %s: %s\n", ipver, ipstr);
 }
 
-/*
-   int fd = make_socket(res) {
-// Try with hints being null
-while (res) {
-print_socket(res);
-res = res->ai_next;
+/**
+ * Form a socket that we can listen to connections on
+ * @param potential_host the link listed returned from getaddrinfo
+ * @returns -1 when fails  or a file descriptor to listen on
+ */
+int make_socket(struct addrinfo *potential_host) {
+	int fd = -1;
+	while (potential_host) {
+		/**
+		 * socket creates an endpoint for communication
+		 * @param ai_family: IPv4 or IPv6
+		 * @param socktype: SOCK_STREAM, SOCK_DGRAM, or SOCK_RAW
+		 * @param protocol: TCP or UDP
+		 * 	- can have one port that supports multiple protocols
+		 * @returns file descriptor 
+		 */
+		fd = socket(potential_host->ai_family,
+			    potential_host->ai_socktype,
+			    potential_host->ai_protocol);
+		if(fd == -1) {
+			perror("socket: \n");
+			potential_host = potential_host->ai_next;
+			continue;
+		}
+		/**
+		 * Associate socket with a specific port
+		 * So we can listen to incomming connections
+		 * @param socket so socket can be assigned to the address
+		 * @param sockaddr contains host, port, IPv4 or IPv6
+		 * @param socklen_t len of address
+		 * @returns 0 in success and -1 for failure and sets errno
+		 */
+		if(bind(fd, potential_host->ai_addr, potential_host->ai_addrlen) == -1) {
+			perror("socket: \n");
+			potential_host = potential_host->ai_next;
+			continue;
+		}
+		// Successfully made a socket
+		char *server_info = sockaddr_tostring(potential_host->ai_addr);
+		printf("Socket %i created for server %s\n", fd, server_info);
+		free(server_info);
+		break;
+	}
+	free(potential_host);
+	return fd;
 }
-}
-*/
+

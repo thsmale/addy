@@ -82,8 +82,39 @@
 				- if hostname is null pointer && AI_PASSIVE === 0
 					- IP address will be set to loopback addresss 
 
+
 		AI_V4MAPPED
 		AI_V4MAPPED_CFG
 		AI_DEFAULT
 		AI_UNUSABLE	
 	  */
+
+	/**
+	 * Beej Guide
+	 * "anyone who says TCP never arrives out of order I wont listen lalala"
+	 * AF = address family
+	 * INET = internet
+	 * memset(&hints, 0, sizeof(addrinfo));
+	 * hints.ai_family = AF_INET6; 
+	 * hints.ai_socktype = SOCK_DGRAM;
+	 * hints.ai_flags = AI_PASSIVE;
+	 */
+
+	/**
+	 * man page
+	 * getaddrinfo gets a list of IP addresses and port names for hostname and servname
+	 * 	- hostname & servname are null pointer or null terminated strings
+	 * 		  TS
+	 * 		  Neither can be null
+	 * 		  One must be string
+	 * 		  Both can be string
+	 * 		  Neither can't be strings
+	 * 	- hostname is valid host name or string IPv4/6 addresss
+	 * 	- servname is port number of service name listed in /etc/services services(5)
+	 TS
+	 char *host = "addy.address"
+	 Map to /etc/hosts localhost
+	 Now go to addy.address in chrome browser
+	 Useful if TLS cert != localhost and running locally
+	 * replaces gethostbyname and getservbyname()
+	 */
