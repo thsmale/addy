@@ -8,10 +8,24 @@
 	- Built in HTTP headers for request and validations
 		- Ensures you are following best practices
 	- Test this server with nodejs frameworks, python frameworks
+	- Able to create requests
+	- Able to create servers
+	- Uses standardized return system
+		- [-Infinity, 0] error
+		- (1, Infinity) success
 3. Tests: These will be made into an interactive website to test
 	- Each section will be a question
 	- User will provide an answer
+	- Like a like bar but 0 and 1 which indicates if answer true or false
+	- This site will be hosted on the web
+	- Its API will be build in Addy
 
+No .h files because this is C not h
+Need a solution to include headers
+	- Two files cannot both include the same header file
+	- That like causes an stack overflow
+	- Just take what you need im the file, get rid of what we dont
+	- **They all share the same .h file**
 /**
   * TS
   *next* 

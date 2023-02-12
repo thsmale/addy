@@ -234,6 +234,12 @@ void printf_test() {
 
 	print_alphabet();
 	print_ascii_table();
+
+	printf("hello %s", print());
+}
+
+void print() {
+	printf("world\n");
 }
 
 
