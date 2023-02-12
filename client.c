@@ -1,3 +1,4 @@
+/*
 #include <stdlib.h>
 #include <stdio.h> 
 #include <sys/types.h> 
@@ -9,6 +10,10 @@
 #include <unistd.h>
 #include <sys/errno.h>
 #include <sys/socket.h>
+*/
+
+
+#include "addy.h"
 
 int main() {
 	struct addrinfo host_config;

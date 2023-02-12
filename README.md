@@ -20,6 +20,11 @@
 	- This site will be hosted on the web
 	- Its API will be build in Addy
 
+```
+gcc client.c addy.c
+gcc server.c
+```
+
 No .h files because this is C not h
 Need a solution to include headers
 	- Two files cannot both include the same header file
