@@ -143,6 +143,7 @@ int main() {
 	  * @var flags: first 10 bits matter
 	  	- Which is first?
 		- If you aint first you last
+			- if you aint FIFO you LIFO
 		- Should fit in 8 bits
 		AI_ADDRCONFIG System decides IVP4 or IPV6
 		AI_ALL 

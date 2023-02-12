@@ -19,10 +19,25 @@
 	- Like a like bar but 0 and 1 which indicates if answer true or false
 	- This site will be hosted on the web
 	- Its API will be build in Addy
+	- Called Confusing
+	-	logo is c from kennis kraiker good dennis kraiger book
+
+## Run
+Assumes machine running UNIX system, macOS, or linux distribution.
 
 ```
+git clone <url>
+cd dir
+
+// Used macOS for this which is an alias for clang by default
 gcc client.c addy.c
 gcc server.c
+./a.out
+
+// or
+chmod u+x client server
+./client
+./server
 ```
 
 No .h files because this is C not h

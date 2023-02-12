@@ -7,8 +7,8 @@
 #include <string.h>
 #include <execinfo.h>
 #include <unistd.h>
-#include <sys/errno.h>
 #include <sys/socket.h>
+#include <errno.h>
 
 // struct client, server, request, 
 struct Addy {

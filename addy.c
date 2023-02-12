@@ -40,8 +40,7 @@ char* sockaddr_tostring(struct sockaddr *sockaddy, char *buffer) {
 		     host,
 		     host_str,
 		     sizeof(host_str)) == NULL) {
-		int err =  errno;
-		fprintf(stderr, "inet_ntop failure %s", strerror(err));
+		fprintf(stderr, "inet_ntop failure %s", strerror(errno));
 		print_callstack();
 	}
 

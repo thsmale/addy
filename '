@@ -5,7 +5,7 @@ int main() {
 	memset(&host_config, 0, sizeof(struct addrinfo));
 	host_config.ai_family = PF_UNSPEC;
 	host_config.ai_socktype = SOCK_STREAM;
-	//host_config.ai_flags = AI_PASSIVE;
+	host_config.ai_flags = AI_PASSIVE;
 
 	struct addrinfo *hosts;
 	char *host = "localhost";
@@ -20,10 +20,10 @@ int main() {
 	while (hosts) {
 		char host_info[MEDIUM];
 		   sockaddr_tostring(hosts->ai_addr, host_info);
-		// fd being any value in the range (-infinity, 0) will equal false
-		if ((fd = socket(hosts->ai_family, hosts->ai_socktype, hosts->ai_protocol)) < 0) {
-			printf("unable to make socket %i for %s because %s\n", fd, host_info, strerror(errno));
-			//strerror(errno);
+		// fd being any value in the range (-infinity, 0] will equal false
+		if ((fd = socket(hosts->ai_family, hosts->ai_socktype, hosts->ai_protocol))) {
+			printf("unable to make socket for %s\n", sockaddr_tostring(hosts->ai_addr, host_info));
+			strerror(errno);
 			perror("socket error");
 			hosts = hosts->ai_next;
 			continue;
@@ -31,16 +31,14 @@ int main() {
 
 
 		if ((connect(fd, hosts->ai_addr, hosts->ai_addrlen)) < 0) {
-			/*
 			char buf[LARGE];
 			int ret = snprintf(buf, 
 					   sizeof (char) * LARGE, 
-					   "socket %i unable to connect to %s because: %s\n", 
-					   fd, host_info, strerror(errno));
+					   "socket %i unable to connect to %s  because: \n", 
+					   fd, host_info);
 			handle_snprintf(ret, sizeof(char) * LARGE);
 			char *buf_ptr = buf;
-			*/
-			printf("socket %i connect to %s failed because %s\n", fd, host_info, strerror(errno));
+			printf("socket %i connect to %s failed\n", fd, buf_ptr/*ohh no buf*/);
 			perror("connect error");
 			hosts = hosts->ai_next;
 			close(fd);
