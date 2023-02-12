@@ -31,15 +31,6 @@ int main() {
 
 
 		if ((connect(fd, hosts->ai_addr, hosts->ai_addrlen)) < 0) {
-			/*
-			char buf[LARGE];
-			int ret = snprintf(buf, 
-					   sizeof (char) * LARGE, 
-					   "socket %i unable to connect to %s because: %s\n", 
-					   fd, host_info, strerror(errno));
-			handle_snprintf(ret, sizeof(char) * LARGE);
-			char *buf_ptr = buf;
-			*/
 			printf("socket %i connect to %s failed because %s\n", fd, host_info, strerror(errno));
 			perror("connect error");
 			hosts = hosts->ai_next;

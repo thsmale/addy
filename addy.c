@@ -1,5 +1,97 @@
 #include "addy.h"
 
+
+/**
+ * Start a server that will listen to connections on a socket
+ * By default this is a SOCK_STREAM server to be used with TCP/HTTP
+ * @param host a FQDN or IP address
+ * @param port a port to bind to, port should respect /etc/services file
+ * @return the file descriptor to read and write streams to
+ */
+int start_server(char *host, char *port) {
+	/**
+	 * Specify what kind of sockets we want
+	 * @var ai_family: IPv4 or IPv6 but let operating system pick
+	 * @var ai_socktype: TCP or UDP
+	 * @var ai_flags: returned socket will use bind
+	 */
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	/**
+	 * getaddrinfo returns a linked list of IP address and port names based on hostname and port
+	 */
+	struct addrinfo *potential_hosts;
+	int err_num = 0; 
+	if ((err_num = getaddrinfo(host, port, &hints, &potential_hosts)) != 0) {
+		fprintf(stderr, "getaddrinfo failed because %s\n", gai_strerror(err_num));
+		return -1;
+	}
+
+	int fd = -1;
+	char host_info[MEDIUM]; //stringified version of struct addrinfo
+	while (potential_hosts) {
+		sockaddr_tostring(potential_hosts->ai_addr, host_info);
+		/**
+		 * socket creates an endpoint for communication
+		 * @param ai_family: IPv4 or IPv6
+		 * @param socktype: SOCK_STREAM, SOCK_DGRAM, or SOCK_RAW
+		 * @param protocol: TCP or UDP
+		 * 	- can have one port that supports multiple protocols
+		 * @returns file descriptor 
+		 */
+		fd = socket(potential_hosts->ai_family,
+			    potential_hosts->ai_socktype,
+			    potential_hosts->ai_protocol);
+		if(fd == -1) {
+			printf("unable to make socket %i for %s because %s\n", fd, host_info, strerror(errno));
+			perror("socket error");
+			potential_hosts = potential_hosts->ai_next;
+			continue;
+		}
+		/**
+		 * Associate socket with a specific port
+		 * So we can listen to incomming connections
+		 * @param socket so socket can be assigned to the address
+		 * @param sockaddr contains host, port, IPv4 or IPv6
+		 * @param socklen_t len of address
+		 * @returns 0 in success and -1 for failure and sets errno
+		 */
+		if(bind(fd, potential_hosts->ai_addr, potential_hosts->ai_addrlen) == -1) {
+			printf("unable to bind socket %i to %s because %s\n", fd, host_info, strerror(errno));
+			perror("bind error");
+			potential_hosts = potential_hosts->ai_next;
+			close(fd);
+			continue;
+		}
+		/**
+		 * listen for incomming connections and set queue limit
+		 * @param socket: created from socket(2) 
+		 * @param backlog: max length of queue for pending connections
+		 * 	- ECONNREFUSED will be returned if request arrives when queue is full
+		 * 	- Note the max value of this is 128 as per BUGS section (man listen)
+		 * @returns 0 for success, -1 and sets errno for failure
+		 */
+		int max_connections = 100;
+		if (listen(fd, max_connections) == -1) {
+			printf("unable to listen on socket %i because %s", fd, strerror(errno));
+			perror("listen error");
+			potential_hosts = potential_hosts->ai_next;
+			close(fd);
+			continue;
+		}
+
+		// Successfully made a socket
+		printf("Socket %i created for server %s\n", fd, host_info);
+		break;
+	}
+
+	return fd;
+}
+
 /*
  * Print out the contents of the sockaddr structure
  * String is allocated on the heap dynamically
@@ -56,54 +148,6 @@ char* sockaddr_tostring(struct sockaddr *sockaddy, char *buffer) {
 	handle_snprintf(ret, sizeof(char) * MEDIUM);
 
 	return buffer;
-}
-
-/**
- * Form a socket that we can listen to connections on
- * @param potential_host the link listed returned from getaddrinfo
- * @returns -1 when fails  or a file descriptor to listen on
- */
-int set_socket(struct addrinfo *potential_host) {
-	int fd = -1;
-	while (potential_host) {
-		/**
-		 * socket creates an endpoint for communication
-		 * @param ai_family: IPv4 or IPv6
-		 * @param socktype: SOCK_STREAM, SOCK_DGRAM, or SOCK_RAW
-		 * @param protocol: TCP or UDP
-		 * 	- can have one port that supports multiple protocols
-		 * @returns file descriptor 
-		 */
-		fd = socket(potential_host->ai_family,
-			    potential_host->ai_socktype,
-			    potential_host->ai_protocol);
-		if(fd == -1) {
-			perror("socket: \n");
-			potential_host = potential_host->ai_next;
-			continue;
-		}
-		/**
-		 * Associate socket with a specific port
-		 * So we can listen to incomming connections
-		 * @param socket so socket can be assigned to the address
-		 * @param sockaddr contains host, port, IPv4 or IPv6
-		 * @param socklen_t len of address
-		 * @returns 0 in success and -1 for failure and sets errno
-		 */
-		if(bind(fd, potential_host->ai_addr, potential_host->ai_addrlen) == -1) {
-			perror("socket: \n");
-			potential_host = potential_host->ai_next;
-			continue;
-		}
-		// Successfully made a socket
-		char buffer[MEDIUM];
-		char *server_info = sockaddr_tostring(potential_host->ai_addr, buffer);
-		printf("Socket %i created for server %s\n", fd, server_info);
-		free(server_info);
-		break;
-	}
-	free(potential_host);
-	return fd;
 }
 
 /**

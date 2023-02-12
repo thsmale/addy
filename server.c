@@ -5,12 +5,13 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <string.h>
-#include <unistd.h>
 #include <execinfo.h>
-#include <sys/errno.h>
+#include <unistd.h>
 #include <sys/socket.h>
+#include <errno.h>
 
 /**
+ * TODO: make these more dynamic
  * Buffer sizes
  * Sizes of strings
  * Static memory is faster than dynamic
@@ -20,6 +21,8 @@
 #define MEDIUM SMALL * 4
 #define LARGE MEDIUM * 4
 #define XL LARGE * 2
+
+
 
 // Linked list of endpoints
 struct Endpoint {
@@ -50,7 +53,6 @@ struct Error {
 	char *message;
 	int err_num;
 };
-
 
 
 /**

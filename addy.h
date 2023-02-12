@@ -27,12 +27,16 @@ struct Addy {
 #define XL LARGE * 2
 
 /**
+ * config server
+*/
+int start_server(char *host, char *port);
+
+/**
  * Config client
  */
 //int create_client(char *host, char *port, int flags);
 
 char* sockaddr_tostring(struct sockaddr *addy, char *ret);
-int set_socket(struct addrinfo *hosts);
 
 /**
  * UTILS file
