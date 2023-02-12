@@ -1,12 +1,13 @@
 #include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include <stdio.h> 
+#include <sys/types.h> 
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
 #include <execinfo.h>
+#include <sys/errno.h>
 
 /**
  * Buffer sizes
@@ -49,7 +50,7 @@ struct Error {
 	int err_num;
 };
 
-		
+
 
 /**
  * Defined in netdb.h
@@ -67,16 +68,16 @@ struct addyinfo {
 };
 
 /**
-  * Actual implementation
-  * 	int ai_flags; // input flags
-  *	int ai_family; //protocol family for socket
-  *	int ai_socktype; //socket type 
-  *	int ai_protocol; //protocol for socket
-  *	int socklen_t ai_addrlen; //length of socket-address
-  *	struct sockaddr *ai_addr; //socket address for socket
-  *	char *ai_canonname; // cannonical name for service location
-  *	struct addrinfo *ai_next; //pointer to next in list
-  */
+ * Actual implementation
+ * 	int ai_flags; // input flags
+ *	int ai_family; //protocol family for socket
+ *	int ai_socktype; //socket type 
+ *	int ai_protocol; //protocol for socket
+ *	int socklen_t ai_addrlen; //length of socket-address
+ *	struct sockaddr *ai_addr; //socket address for socket
+ *	char *ai_canonname; // cannonical name for service location
+ *	struct addrinfo *ai_next; //pointer to next in list
+ */
 
 // Function declarations
 void print_sockets(struct addrinfo *addy_info);
@@ -87,22 +88,23 @@ char* sockaddr_tostring(struct sockaddr *sockaddy);
 void print_callstack();
 void handle_snprintf(int ret, size_t size);
 void fail();
+void print_ip(struct addrinfo *addr);
 
 int main() {
 	int fd;
 	struct addyinfo addy_info;
 
 	/**
-	  * Beej Guide
-	  * "anyone who says TCP never arrives out of order I wont listen lalala"
-	  * AF = address family
-	  * memset(&hints, 0, sizeof(addrinfo));
-	  * hints.ai_family = AF_INET6; 
-	  * hints.ai_socktype = SOCK_DGRAM;
-	  * hints.ai_flags = AI_PASSIVE;
-	  */
+	 * Beej Guide
+	 * "anyone who says TCP never arrives out of order I wont listen lalala"
+	 * AF = address family
+	 * memset(&hints, 0, sizeof(addrinfo));
+	 * hints.ai_family = AF_INET6; 
+	 * hints.ai_socktype = SOCK_DGRAM;
+	 * hints.ai_flags = AI_PASSIVE;
+	 */
 
-	
+
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = PF_UNSPEC;
@@ -120,36 +122,36 @@ int main() {
 	 * 		  Both can be string
 	 * 		  Neither can't be strings
 	 * 	- hostname is valid host name or string IPv4/6 addresss
-	 * 	- servname is port number of service name listed in services(5)
-	 		TS
-	 		char *host = "addy.address"
-			Map to /etc/hosts localhost
-			Now go to addy.address in chrome browser
-			Useful if TLS cert != localhost and running locally
+	 * 	- servname is port number of service name listed in /etc/services services(5)
+	 TS
+	 char *host = "addy.address"
+	 Map to /etc/hosts localhost
+	 Now go to addy.address in chrome browser
+	 Useful if TLS cert != localhost and running locally
 	 * replaces gethostbyname and getservbyname()
 	 */
-	char *host = "localhost";
+	char *host = "127.0.0.1"; //"localhost";
 	struct addrinfo *potential_hosts;
 	char *port = "443";
 	int err_num = 0; 
 	struct Error error;
 	memset(&error, 0, sizeof(struct Error));
-	if ((err_num = getaddrinfo(host, port, &hints, &potential_hosts)) != 0) {
+	if ((err_num = getaddrinfo("localhost", "8000", &hints, &potential_hosts)) != 0) {
 		struct Error error = error;
 		error.err_num = err_num;
 		fail(error);
 		return -1;
 	}
-	
+
 	print_sockets(potential_hosts);
 
 
 	/*
 	 * Function for actually setting the functions
-	fd = make_socket(potential_hosts);
-	if (!fd) return -1;
-	*/
-	
+	 fd = make_socket(potential_hosts);
+	 if (!fd) return -1;
+	 */
+
 
 
 
@@ -161,40 +163,55 @@ int main() {
  * String is allocated on the heap dynamically
  * So the string returned should be freed after usage is finished
  * I think it's in sys/socket.h
+ * somehow sockaddr can be cast to sockaddr_in or sockaddr_in6
+ * using sockaddr->data was resulting in odd behavior 
  */
 char* sockaddr_tostring(struct sockaddr *sockaddy) {
 	char *family;
+	int port;
+	void *host;
 	if (sockaddy->sa_family == AF_INET) {
 		family = "IPv4";
+		struct sockaddr_in *sockaddy_in = (struct sockaddr_in *)sockaddy;
+		host = &(sockaddy_in->sin_addr);
+		port = sockaddy_in->sin_port;
 	}
 	else if (sockaddy->sa_family == AF_INET6) {
 		family = "IPv6";
+		struct sockaddr_in6 *sockaddy_in = (struct sockaddr_in6 *)sockaddy;
+		host = &(sockaddy_in->sin6_addr);
+		port = sockaddy_in->sin6_port;
 	}
 	else { 
-		family = "Unknown family";
+		return "Unknown family";
 	}
 
 	/**
 	 * inet_ntop: Convert binary numbers to IP address
 	 * 	ntop: network to printable or network text presentation
 	 */
-	char host[SMALL];
-	inet_ntop(sockaddy->sa_family,
-		sockaddy->sa_data,
-		host,
-		sizeof(char) * SMALL);
-		
+	char host_str[INET6_ADDRSTRLEN];
+	if(inet_ntop(sockaddy->sa_family,
+		     host,
+		     host_str,
+		     sizeof(host_str)) == NULL) {
+		int err =  errno;
+		fprintf(stderr, "inet_ntop failure %s", strerror(err));
+		print_callstack();
+	}
+
 	char *buffer = malloc(sizeof(char) * MEDIUM);
 	int ret = snprintf(buffer, sizeof(char) * MEDIUM,
-		 "struct sockaddr {\n\
-	         \tfamily = %i %s\n\
-	         \tdata = %s\n\
-	         }\n",
-	       sockaddy->sa_family, family,
-	       host);
+			   "struct sockaddr {\n\
+			   \tfamily = %i %s\n\
+			   \taddress = %s\n\
+			   \tport = %i\n\
+			   }\n",
+			   sockaddy->sa_family, family,
+			   host_str,
+			   htons(port));
 	handle_snprintf(ret, sizeof(char) * MEDIUM);
 
-	printf("buffer = %s\n", buffer);
 	return buffer;
 }
 
@@ -204,6 +221,7 @@ char* sockaddr_tostring(struct sockaddr *sockaddy) {
 void print_sockets(struct addrinfo *addy_info) {
 	while(addy_info) {
 		print_socket(addy_info);
+		print_ip(addy_info);
 		addy_info = addy_info->ai_next;
 	}
 }
@@ -246,13 +264,13 @@ void print_socket(struct addrinfo *addy_info) {
 	char *sockaddr_str = sockaddr_tostring(addy_info->ai_addr);
 
 	printf("struct addrinfo {\n\
-		       \tflags = %i\n\
-		       \tprotocol family for socket = %i %s\n\
-		       \tsocket type = %i %s\n\
-		       \tprotocol for socket= %i %s\n\
-		       \tlength of socket-address = %i\n\
-		       \tsocket address = %s\n\
-		       \tcanonical name for service location = %s\n}\n", 
+	       \tflags = %i\n\
+	       \tprotocol family for socket = %i %s\n\
+	       \tsocket type = %i %s\n\
+	       \tprotocol for socket= %i %s\n\
+	       \tlength of socket-address = %i\n\
+	       \tsocket address = %s\n\
+	       \tcanonical name for service location = %s\n}\n", 
 	       addy_info->ai_flags,
 	       addy_info->ai_family, family,
 	       addy_info->ai_socktype, socktype,
@@ -329,12 +347,39 @@ void fail(struct Error error) {
 	}
 };
 
-/*
-int fd = make_socket(res) {
-	// Try with hints being null
-	while (res) {
-		print_socket(res);
-		res = res->ai_next;
+
+/**
+ * Beej
+ * Print IP's returned from getaddrinfo
+ */
+void print_ip(struct addrinfo *p) {
+	void *addr;
+	char *ipver;
+	char ipstr[INET6_ADDRSTRLEN];
+
+	// get the pointer to the address itself,
+	// different fields in IPv4 and IPv6:
+	if (p->ai_family == AF_INET) { // IPv4
+		struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+		addr = &(ipv4->sin_addr);
+		ipver = "IPv4";
+	} else { // IPv6
+		struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
+		addr = &(ipv6->sin6_addr);
+		ipver = "IPv6";
 	}
+
+	// convert the IP to a string and print it:
+	inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
+	printf("  %s: %s\n", ipver, ipstr);
+}
+
+/*
+   int fd = make_socket(res) {
+// Try with hints being null
+while (res) {
+print_socket(res);
+res = res->ai_next;
+}
 }
 */

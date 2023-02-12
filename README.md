@@ -7,6 +7,7 @@
 	- Built off on top of existing Unix networking
 	- Built in HTTP headers for request and validations
 		- Ensures you are following best practices
+	- Test this server with nodejs frameworks, python frameworks
 3. Tests: These will be made into an interactive website to test
 	- Each section will be a question
 	- User will provide an answer
