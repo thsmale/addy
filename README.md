@@ -13,6 +13,16 @@
 	- Uses standardized return system
 		- [-Infinity, 0] error
 		- (1, Infinity) success
+	- Has metrics to see sockets open, cpu usage, etc
+		/**
+		 * Child prcess
+		 * Add metrics from getrlimit(2)
+		 * To print out real time stats about server
+		 * An array of connections
+		 * struct connection 
+		 * 	- pid
+		 * 	- rlimit information
+		 */
 3. Tests: These will be made into an interactive website to test
 	- Each section will be a question
 	- User will provide an answer
@@ -21,6 +31,16 @@
 	- Its API will be build in Addy
 	- Called Confusing
 	-	logo is c from kennis kraiker good dennis kraiger book
+	- Fork 
+		examine the output from the terminal as well as
+		gcc fork.c
+		./a.out - observe console output
+		./a.out > out - observe output is longer than console
+		./a.out | grep -i PICKLE - 1 write(2)
+		./a.out | grep -i uno - 2 printf(3)
+		cat fork.out | grep -i fwrite | wc -l - 1 fwrite(3)
+
+
 
 ## Run
 Assumes machine running UNIX system, macOS, or linux distribution.

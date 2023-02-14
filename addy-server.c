@@ -1,9 +1,27 @@
 #include "addy.h"
 
+void zombie_handler() {
+}
+
 int main() {
 	int fd = start_server("localhost", "8000");
 	if (fd < 1) {
 		printf("Failed to create server\n");
+		return -1;
+	}
+
+	/**
+	 * stuct sigaction {
+	 * 	union __sigaction_u __sigaction_u  // call back function signal handler
+	 * 	sigset_ sa_mask //signal mask
+	 * 	int sa_flags 
+	 */
+	struct sigaction sa;
+	sa.sa_handler = zombie_handler;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+		perror("sigaction");
 		return -1;
 	}
 
@@ -19,14 +37,23 @@ int main() {
 	struct sockaddr new_connection;
 	socklen_t address_len = sizeof(new_connection);
 	int new_fd; 
-	char host[MEDIUM]; 
+	char client[MEDIUM]; 
+	int processes = 0;
 	while (1) {
 		if((new_fd = accept(fd, &new_connection, &address_len) == -1)) {
-			perror("accept: \n");
+			perror("accept failed");
 			continue;
 		}
-		printf("Accepted new conection from %s\n", sockaddr_tostring(&new_connection, host));
-		if(!fork()) {
+
+		sockaddr_tostring(&new_connection, client);
+		printf("Server accepted new conection from %s\n", client);
+
+		pid_t pid = fork();
+		if (pid < 0) {
+			printf("Failed to start process for client %s because %s", client, strerror(errno));
+			continue;
+		} 
+		else if (pid == 0) {
 			/**
 			 * @param socket the file descriptor receiving the data
 			 * @param buffer
@@ -38,18 +65,24 @@ int main() {
 			 */
 			char buffer[LARGE];
 			int ret = recv(new_fd, buffer, sizeof(char)*LARGE-1, 0);
-			buffer[ret] = '\0';
-			printf("Received %s from client\n", buffer);
-			if (ret == 0) {
-				printf("Should close connection now\n");
-				exit(1);
-			} else if (ret < 0) {
-				printf("recv error: \n");
+
+			if (ret < 0) {
+				printf("pid %i socket %i recv failed because %s\n",
+				       getpid(), new_fd, strerror(errno));
+				perror("recv error");
 				exit(-1);
+			} 
+
+			if (ret == 0) {
+				printf("pid %i socket %i recv done\n", getpid(), new_fd);
+				close(new_fd);
+				exit(1);
 			}
-		}
-		close(new_fd);
+
+			buffer[ret] = '\0';
+			printf("pid %i socket %i recv %s from client\n", getpid(), new_fd, buffer);
+		} 
 	}
 	close(fd);
-
+	return 0;
 }
