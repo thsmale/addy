@@ -1,27 +1,12 @@
 #include "addy.h"
-
-void zombie_handler() {
-}
+#include <time.h>
+#include <sys/wait.h>
+#include <signal.h>
 
 int main() {
 	int fd = start_server("localhost", "8000");
 	if (fd < 1) {
 		printf("Failed to create server\n");
-		return -1;
-	}
-
-	/**
-	 * stuct sigaction {
-	 * 	union __sigaction_u __sigaction_u  // call back function signal handler
-	 * 	sigset_ sa_mask //signal mask
-	 * 	int sa_flags 
-	 */
-	struct sigaction sa;
-	sa.sa_handler = zombie_handler;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
-		perror("sigaction");
 		return -1;
 	}
 
@@ -36,9 +21,8 @@ int main() {
 	 */
 	struct sockaddr new_connection;
 	socklen_t address_len = sizeof(new_connection);
-	int new_fd; 
 	char client[MEDIUM]; 
-	int processes = 0;
+	int new_fd; 
 	while (1) {
 		if((new_fd = accept(fd, &new_connection, &address_len) == -1)) {
 			perror("accept failed");
@@ -53,7 +37,7 @@ int main() {
 			printf("Failed to start process for client %s because %s", client, strerror(errno));
 			continue;
 		} 
-		else if (pid == 0) {
+		if (pid == 0) {
 			/**
 			 * @param socket the file descriptor receiving the data
 			 * @param buffer
@@ -70,18 +54,28 @@ int main() {
 				printf("pid %i socket %i recv failed because %s\n",
 				       getpid(), new_fd, strerror(errno));
 				perror("recv error");
-				exit(-1);
+				return -1;
 			} 
 
 			if (ret == 0) {
 				printf("pid %i socket %i recv done\n", getpid(), new_fd);
-				close(new_fd);
-				exit(1);
+				return -1;
 			}
 
 			buffer[ret] = '\0';
 			printf("pid %i socket %i recv %s from client\n", getpid(), new_fd, buffer);
 		} 
+		// Parent 
+		// Or return from child process
+		int status = 0;
+		int result = waitpid(pid, &status, 0);
+		if (WIFEXITED(status)) {
+			printf("Process %i exited peacefully with status %d\n", pid, WEXITSTATUS(status));
+			printf("csv, %i, %d, %ld\n", pid, WEXITSTATUS(status), time(0));
+		} else {
+			printf("Process %i terminated abonrmally\n", pid);
+		}
+		if (close(new_fd) == -1) perror("close");
 	}
 	close(fd);
 	return 0;

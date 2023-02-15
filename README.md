@@ -23,6 +23,8 @@
 		 * 	- pid
 		 * 	- rlimit information
 		 */
+	- start_server returns a Server struct
+	- you can add functions to the server struct
 3. Tests: These will be made into an interactive website to test
 	- Each section will be a question
 	- User will provide an answer
@@ -32,13 +34,19 @@
 	- Called Confusing
 	-	logo is c from kennis kraiker good dennis kraiger book
 	- Fork 
+		this is why you must fflush!!!! Everything flushed wont get copied > twice to the output file
 		examine the output from the terminal as well as
 		gcc fork.c
 		./a.out - observe console output
 		./a.out > out - observe output is longer than console
 		./a.out | grep -i PICKLE - 1 write(2)
-		./a.out | grep -i uno - 2 printf(3)
+		./a.out | grep -i uno - 2 printf(3) (unless you fflush!!!)
+		./a.out | grep dollar
+		./a.out | grep -i csv
+		./a.out | grep CSV
 		cat fork.out | grep -i fwrite | wc -l - 1 fwrite(3)
+	- Whats the difference between a socket and file descriptor? 
+	- Whats the diference between a pid and file descriptor?
 
 
 
@@ -172,3 +180,18 @@ Need a solution to include headers
 	 Useful if TLS cert != localhost and running locally
 	 * replaces gethostbyname and getservbyname()
 	 */
+
+	/**
+	 * stuct sigaction {
+	 * 	union __sigaction_u __sigaction_u  // call back function signal handler
+	 * 	sigset_ sa_mask //signal mask
+	 * 	int sa_flags 
+	 */
+	struct sigaction sa;
+	sa.sa_handler = zombie_handler;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+		perror("sigaction");
+		return -1;
+	}

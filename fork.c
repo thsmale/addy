@@ -166,6 +166,8 @@ int main() {
 			printf("Process %i terminated abonrmally\n", pid);
 		}
 	}
+	// after waitpid
+	processes = 10;
 	printf("Number of processes at exit %i\n", processes);
 	return 0;
 }
