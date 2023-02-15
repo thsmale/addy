@@ -47,6 +47,13 @@
 		cat fork.out | grep -i fwrite | wc -l - 1 fwrite(3)
 	- Whats the difference between a socket and file descriptor? 
 	- Whats the diference between a pid and file descriptor?
+	- printf("%s", strlen("string"));
+		- %lu
+		- %d
+		- %f
+		- %s
+		a. char * but the argument has type unsigned long
+
 
 
 
@@ -195,3 +202,5 @@ Need a solution to include headers
 		perror("sigaction");
 		return -1;
 	}
+
+

@@ -40,6 +40,15 @@ int main() {
 
 		char buf[MEDIUM];
 		printf("Successfully made a connection to host %s\n", sockaddr_tostring(hosts->ai_addr, buf));
+
+		// Send data to server
+		char *string  = "ping";
+		int bytes = 0;
+		if((bytes = write(fd, string, strlen(string) * sizeof(char))) == -1) 
+			perror("write");
+		if (bytes < strlen(string) * sizeof(char))
+			fprintf(stderr, "Did not print entire buffer\n");
+
 		break;
 	}
 
