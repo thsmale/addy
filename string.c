@@ -30,12 +30,12 @@ int main() {
 	}
 
 
-	printf_test();
+	strlen_test();
 
 	/*
+	printf_test();
 	return_strings();
 
-	strlen_test();
 	strcmp_test();
 	snprintf_test();
 	*/
@@ -80,23 +80,16 @@ void strcmp_test() {
 }
 
 void strlen_test() {
-	char *a;
-	char *b = "";
-	char *c = "\0";
-	char *d = "insert mc here";
-	char *e = "null terminated string\0";
-	printf("%lu, %lu, %lu, %lu, %lu\n", strlen(a), strlen(b), strlen(c), strlen(d), strlen(e));
-	//printf("%s\n%s\n%s\n%s\n%s\n", a, b, c, d, e);
-
 	char *apple = "apple";
 	char *null_terminated_apple = "apple\0";
-	if(strlen(apple) != strlen(null_terminated_apple)) {
-		printf("Expecting null terminated string to be same length as terminated string\n");
+	if(strlen(apple) == strlen(null_terminated_apple)) {
+		printf("strlen, non & null terminated char pointer are equal strlen\n");
 	}
 
-	if (strlen("abc") != 3) {
+	if (strlen("abc") == 3) {
+		printf( "strlen('abc'), can find length of string literal\n");
+	} else 
 		fprintf(stderr, "Cannot find length of string literal\n");
-	}
 
 	/*
 	 * Seg fault, must pass char pointer
@@ -112,6 +105,29 @@ void strlen_test() {
 
 	if ((strlen(x) != 0) && (strlen(y) != 1) && (strlen(z) != 3)) 
 		fprintf(stderr, "Expecting strlen to stop counting at first null terminator\n");
+
+	printf("strlen(\"*\") = %lu;\n", strlen("*"));
+	printf("strlen(\"\") = %lu;\n", strlen("\\"));
+	printf("strlen(\"\\0\") = %lu;\n", strlen("\0"));
+	printf("strlen(\"1\") = %lu;\n", strlen("1"));
+	printf("strlen(\"string\") = %lu;\n", strlen("string"));
+	printf("strlen(\"string\\0\") = %lu;\n", strlen("string\0"));
+
+	char *a;
+	char *b = "";
+	char *c = "\0";
+	char *d = "insert mc here";
+	char *e = "null terminated string\0";
+	printf("CSV");
+	printf("------|-----------------\n");
+	printf("char * var, value, printf(value), strlen(value)\n");
+	printf("a,not initilization to anything;,%s,%lu\n", a, strlen(a));
+	printf("b,\"\",%s,%lu\n", b, strlen(b));
+	printf("c,\"\\0\"%s,%lu\n", c, strlen(c));
+	printf("d,insert mc here,%s,%lu\n", d, strlen(d));
+	printf("e,null terminated string\\0,%s,%lu\n", e, strlen(e));
+
+
 }
 
 void snprintf_test() {
@@ -235,7 +251,6 @@ void printf_test() {
 	print_alphabet();
 	print_ascii_table();
 
-	printf("hello %s", print());
 }
 
 void print() {
