@@ -36,6 +36,7 @@
 	- Called Confusing
 	-	logo is c from kennis kraiker good dennis kraiger book
 	- Fork 
+		fflush after every printf, maybe even double flush
 		this is why you must fflush!!!! Everything flushed wont get copied > twice to the output file
 		examine the output from the terminal as well as
 		gcc fork.c

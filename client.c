@@ -38,41 +38,23 @@ int main() {
 			continue;
 		}
 
-		char buf[MEDIUM];
-		printf("Successfully made a connection to host %s\n", sockaddr_tostring(hosts->ai_addr, buf));
 
-		/**
-		 * @param socket the file descriptor receiving the data
-		 * @param buffer
-		 * @param length
-		 * @param flags
-		 * @return number of bytes received
-		 * 	- 0: if no messages are able to be recieved and peer has performed shutdown
-		 * 	- -1: errno is set
-		 */
+		printf("Successfully made a connection to host %s\n", 
+		       sockaddr_tostring(hosts->ai_addr, host_info));
+
+		int bytes_read = 0;
 		char buffer[LARGE];
-		int ret = recv(fd, buffer, sizeof(char)*LARGE-1, 0);
-
-		if (ret < 0) {
-			perror("recv error");
+		if ((bytes_read = read(fd, &buffer, LARGE * sizeof(char))) == -1) {
+		    perror("read");
+		    hosts = hosts->ai_next;
+		    close(fd);
+		} else if (bytes_read == 0) {
+			fprintf(stderr, "End of file reached\n");
 			close(fd);
-			hosts = hosts->ai_next;
-			continue;
-		} 
-
-		if (ret == 0) {
-			//printf("pid %i socket %i recv done\n", getpid(), new_fd);
-			printf("recv done\n");
-			close(fd);
-			hosts = hosts->ai_next;
-			continue;
+		} else {
+			buffer[bytes_read] = '\0';
+			printf("read %s\n", buffer);
 		}
-
-		buffer[ret] = '\0';
-		//printf("pid %i socket %i recv %s from client\n", getpid(), fd, buffer);
-		printf("%s\n", buffer);
-
-
 		break;
 	}
 

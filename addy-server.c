@@ -35,21 +35,16 @@ int main() {
 
 		pid_t pid = fork();
 		if (pid < 0) {
-			printf("Failed to start process for client %s because %s", client, strerror(errno));
+			fprintf(stderr,
+				"Failed to start process for client %s because %s", client, strerror(errno));
 			continue;
 		} 
 
 		if (pid == 0) {
 			// Send data to client 
-			char *string  = "ping";
-			int bytes = 0;
-			if((bytes = write(fd, string, strlen(string) * sizeof(char))) == -1) {
-				perror("write");
-				return -1;
+			if(write_request(new_fd, "ping") == -1) {
+				print_callstack();
 			}
-			if (bytes < strlen(string) * sizeof(char))
-				fprintf(stderr, "Did not print entire buffer\n");
-			return 0;
 		} 
 
 		// Parent 
@@ -67,6 +62,6 @@ int main() {
 		}
 		if (close(new_fd) == -1) perror("close");
 	}
-	close(fd);
+	if (close(fd) == -1) perror("close");
 	return 0;
 }

@@ -96,11 +96,10 @@ int start_server(char *host, char *port) {
  * Reads data from a socket
  * Overwrites the buffer and returns it
  * @param fd is a socket file descriptor 
- * @param buffer is a SMALL MEDIUM LARGE etc sizes
  * @returns the buffer
  */
-char* read_request(int fd, char *buffer) {
-	int bytes_recv = recv(fd, &buffer, sizeof(char)*LARGE-1, 0);
+char* recv_request(int fd, char *buffer) {
+	int bytes_recv = recv(fd, &buffer, sizeof(char)*strlen(buffer)-1, 0);
 
 	if (bytes_recv == -1) {
 		printf("pid %i socket %i recv failed because %s\n",
@@ -118,6 +117,21 @@ char* read_request(int fd, char *buffer) {
 	buffer[bytes_recv] = '\0';
 	return buffer;
 }
+
+// Send data to client 
+int write_request(int fd, char *buffer) {
+	int bytes = 0;
+	if((bytes = write(fd, buffer, strlen(buffer) * sizeof(char))) == -1) {
+		perror("write");
+		return -1;
+	}
+	if (bytes < strlen(buffer) * sizeof(char)) {
+		fprintf(stderr, "Did not print entire buffer\n");
+		return -1;
+	}
+	return 0;
+}
+
 
 /*
  * Print out the contents of the sockaddr structure

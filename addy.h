@@ -30,7 +30,7 @@ struct Addy {
  * config server
 */
 int start_server(char *host, char *port);
-char* read_request(int fd, char *buffer);
+char* recv_request(int fd, char *buffer);
 int write_request();
 
 /**

@@ -1,0 +1,35 @@
+PICKLE
+uno
+CSV TABLE
+Limits on consumption of system resources by the current process and each process it creates
+----|------------------------
+current, max, unit, description
+0, 9223372036854775807, bytes, largest *core* file size that may be created
+9223372036854775807, 9223372036854775807, seconds, max CPU used by process <pid>
+9223372036854775807, 9223372036854775807, bytes, max data segement for process <pid>
+9223372036854775807, 9223372036854775807, bytes, largest file size that may be created
+256, 9223372036854775807, decimal, open files for this process <pid>
+2784, 2784, decimal, simulateneous processes for this <pid>
+9223372036854775807, 9223372036854775807, bytes, physical memory allocated to processes <pid>
+8388608, 67104768, bytes, max stack size for processes <pid>
+nuts
+dollarProcess 0 exited peacefully with status 0
+csv, 0, 0, 1676439515
+Number of processes at exit 10
+uno
+CSV TABLE
+Limits on consumption of system resources by the current process and each process it creates
+----|------------------------
+current, max, unit, description
+0, 9223372036854775807, bytes, largest *core* file size that may be created
+9223372036854775807, 9223372036854775807, seconds, max CPU used by process <pid>
+9223372036854775807, 9223372036854775807, bytes, max data segement for process <pid>
+9223372036854775807, 9223372036854775807, bytes, largest file size that may be created
+256, 9223372036854775807, decimal, open files for this process <pid>
+2784, 2784, decimal, simulateneous processes for this <pid>
+9223372036854775807, 9223372036854775807, bytes, physical memory allocated to processes <pid>
+8388608, 67104768, bytes, max stack size for processes <pid>
+nuts
+dollarProcess 62130 exited peacefully with status 0
+csv, 62130, 0, 1676439515
+Number of processes at exit 10
