@@ -5,6 +5,7 @@
 
 # compile addy-server
 gcc addy-server.c addy.c -o server.out
+
 if [ $? -eq 0 ]
 then
 	./server.out

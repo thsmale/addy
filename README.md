@@ -26,6 +26,8 @@
 	- start_server returns a Server struct
 	- you can add functions to the server struct
 3. Tests: These will be made into an interactive website to test
+	* send a thousand requests to the server
+		* need system analytics similar to top
 	- Each section will be a question
 	- User will provide an answer
 	- Like a like bar but 0 and 1 which indicates if answer true or false

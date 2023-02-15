@@ -92,6 +92,33 @@ int start_server(char *host, char *port) {
 	return fd;
 }
 
+/**
+ * Reads data from a socket
+ * Overwrites the buffer and returns it
+ * @param fd is a socket file descriptor 
+ * @param buffer is a SMALL MEDIUM LARGE etc sizes
+ * @returns the buffer
+ */
+char* read_request(int fd, char *buffer) {
+	int bytes_recv = recv(fd, &buffer, sizeof(char)*LARGE-1, 0);
+
+	if (bytes_recv == -1) {
+		printf("pid %i socket %i recv failed because %s\n",
+		       getpid(), fd, strerror(errno));
+		perror("recv error");
+		return NULL;
+	} 
+
+	if (bytes_recv == 0) {
+		printf("pid %i socket %i recv done\n", getpid(), fd);
+		return 0;
+	}
+
+	// badass
+	buffer[bytes_recv] = '\0';
+	return buffer;
+}
+
 /*
  * Print out the contents of the sockaddr structure
  * String is allocated on the heap dynamically

@@ -11,6 +11,7 @@ int main() {
 	}
 
 	/**
+	 * Accept
 	 * Extracts first connection request on the queue of pending connections
 	 * @param socket a socket that has been created with socket(2), bind(2), and listen(2)
 	 * @param sockaddr pointer to sockaddr this is filled in with connection details of client
@@ -37,41 +38,30 @@ int main() {
 			printf("Failed to start process for client %s because %s", client, strerror(errno));
 			continue;
 		} 
+
 		if (pid == 0) {
-			/**
-			 * @param socket the file descriptor receiving the data
-			 * @param buffer
-			 * @param length
-			 * @param flags
-			 * @return number of bytes received
-			 * 	- 0: if no messages are able to be recieved and peer has performed shutdown
-			 * 	- -1: errno is set
-			 */
-			char buffer[LARGE];
-			int ret = recv(new_fd, buffer, sizeof(char)*LARGE-1, 0);
-
-			if (ret < 0) {
-				printf("pid %i socket %i recv failed because %s\n",
-				       getpid(), new_fd, strerror(errno));
-				perror("recv error");
-				return -1;
-			} 
-
-			if (ret == 0) {
-				printf("pid %i socket %i recv done\n", getpid(), new_fd);
+			// Send data to client 
+			char *string  = "ping";
+			int bytes = 0;
+			if((bytes = write(fd, string, strlen(string) * sizeof(char))) == -1) {
+				perror("write");
 				return -1;
 			}
-
-			buffer[ret] = '\0';
-			printf("pid %i socket %i recv %s from client\n", getpid(), new_fd, buffer);
+			if (bytes < strlen(string) * sizeof(char))
+				fprintf(stderr, "Did not print entire buffer\n");
+			return 0;
 		} 
+
 		// Parent 
 		// Or return from child process
 		int status = 0;
 		int result = waitpid(pid, &status, 0);
 		if (WIFEXITED(status)) {
 			printf("Process %i exited peacefully with status %d\n", pid, WEXITSTATUS(status));
-			printf("csv, %i, %d, %ld\n", pid, WEXITSTATUS(status), time(0));
+			// Collect up to a 1000, then more
+			printf("CSV-----|----------\n");
+			printf("pid, exit_status, time 64b\n");
+			printf("%i, %d, %ld\n", pid, WEXITSTATUS(status), time(0));
 		} else {
 			printf("Process %i terminated abonrmally\n", pid);
 		}

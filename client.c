@@ -19,7 +19,7 @@ int main() {
 	int fd = 0;
 	while (hosts) {
 		char host_info[MEDIUM];
-		   sockaddr_tostring(hosts->ai_addr, host_info);
+		sockaddr_tostring(hosts->ai_addr, host_info);
 		// fd being any value in the range (-infinity, 0) will equal false
 		if ((fd = socket(hosts->ai_family, hosts->ai_socktype, hosts->ai_protocol)) < 0) {
 			printf("unable to make socket %i for %s because %s\n", fd, host_info, strerror(errno));
@@ -41,13 +41,37 @@ int main() {
 		char buf[MEDIUM];
 		printf("Successfully made a connection to host %s\n", sockaddr_tostring(hosts->ai_addr, buf));
 
-		// Send data to server
-		char *string  = "ping";
-		int bytes = 0;
-		if((bytes = write(fd, string, strlen(string) * sizeof(char))) == -1) 
-			perror("write");
-		if (bytes < strlen(string) * sizeof(char))
-			fprintf(stderr, "Did not print entire buffer\n");
+		/**
+		 * @param socket the file descriptor receiving the data
+		 * @param buffer
+		 * @param length
+		 * @param flags
+		 * @return number of bytes received
+		 * 	- 0: if no messages are able to be recieved and peer has performed shutdown
+		 * 	- -1: errno is set
+		 */
+		char buffer[LARGE];
+		int ret = recv(fd, buffer, sizeof(char)*LARGE-1, 0);
+
+		if (ret < 0) {
+			perror("recv error");
+			close(fd);
+			hosts = hosts->ai_next;
+			continue;
+		} 
+
+		if (ret == 0) {
+			//printf("pid %i socket %i recv done\n", getpid(), new_fd);
+			printf("recv done\n");
+			close(fd);
+			hosts = hosts->ai_next;
+			continue;
+		}
+
+		buffer[ret] = '\0';
+		//printf("pid %i socket %i recv %s from client\n", getpid(), fd, buffer);
+		printf("%s\n", buffer);
+
 
 		break;
 	}
