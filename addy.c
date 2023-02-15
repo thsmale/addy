@@ -92,6 +92,73 @@ int start_server(char *host, char *port) {
 	return fd;
 }
 
+/*
+ * Send data to a server
+ * @param host ip address to send data to
+ * @param port port or protocol the server is running see /etc/services or services(2)
+ * @return the response from the server
+ */
+char* request(char *host, char *port, char *paylaod) {
+	struct addrinfo host_config;
+	memset(&host_config, 0, sizeof(struct addrinfo));
+	host_config.ai_family = PF_UNSPEC;
+	host_config.ai_socktype = SOCK_STREAM;
+	//host_config.ai_flags = AI_PASSIVE;
+
+	struct addrinfo *hosts;
+	int err_num = 0;
+	if ((err_num = getaddrinfo(host, port, &host_config, &hosts)) != 0) {
+		fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(err_num));
+		return NULL;
+	}
+
+	char *response = malloc(sizeof(char) * LARGE);
+	while (hosts) {
+		int fd;
+		char host_info[MEDIUM];
+		sockaddr_tostring(hosts->ai_addr, host_info);
+		// fd being any value in the range (-infinity, 0) will equal false
+		if ((fd = socket(hosts->ai_family, hosts->ai_socktype, hosts->ai_protocol)) < 0) {
+			printf("unable to make socket %i for %s because %s\n", fd, host_info, strerror(errno));
+			//strerror(errno);
+			perror("socket error");
+			hosts = hosts->ai_next;
+			continue;
+		}
+
+
+		if ((connect(fd, hosts->ai_addr, hosts->ai_addrlen)) < 0) {
+			printf("socket %i connect to %s failed because %s\n", fd, host_info, strerror(errno));
+			perror("connect error");
+			hosts = hosts->ai_next;
+			close(fd);
+			continue;
+		}
+
+
+		printf("Successfully made a connection to host %s\n", 
+		       sockaddr_tostring(hosts->ai_addr, host_info));
+
+		int bytes_read = 0;
+		if ((bytes_read = read(fd, response, LARGE * sizeof(char))) == -1) {
+		    perror("read");
+		    hosts = hosts->ai_next;
+		    close(fd);
+		    continue;
+		} else if (bytes_read == 0) {
+			printf("End of file reached\n");
+			snprintf(response, sizeof(char) * LARGE, "EOF");
+			return response;
+		} else {
+			response[bytes_read] = '\0';
+			return response;
+		}
+		close(fd);
+		break;
+	}
+	return response;
+}
+
 /**
  * Reads data from a socket
  * Overwrites the buffer and returns it

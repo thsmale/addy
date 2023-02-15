@@ -27,25 +27,22 @@ struct Addy {
 #define XL LARGE * 2
 
 /**
- * config server
+ * server and client functions
 */
 int start_server(char *host, char *port);
+char* request(char *host, char *port, char *payload);
 char* recv_request(int fd, char *buffer);
-int write_request();
-
-/**
- * Config client
- */
-//int create_client(char *host, char *port, int flags);
-
-char* sockaddr_tostring(struct sockaddr *addy, char *ret);
+int write_request(int fd, char *buffer);
 
 /**
  * UTILS file
+ * print_callstack: stack trace for debugging
+ * hanlde_snprintf: print callstack and warning message
+ * sockaddr_tostring: convert sockaddr struct to string  for debugging
 */
 void print_callstack();
-// Print callstack and warning message
 void handle_snprintf(int ret, size_t size);
+char* sockaddr_tostring(struct sockaddr *addy, char *ret);
 
 /**
  * LOG file
