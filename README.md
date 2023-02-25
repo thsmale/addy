@@ -29,7 +29,7 @@
 Assumes machine running UNIX system, macOS, or linux distribution.
 
 ```
-git clone <url>
+git clone https://github.com/thsmale/addy
 cd dir
 
 chmod u+x client server
