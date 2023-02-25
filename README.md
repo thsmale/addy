@@ -32,12 +32,6 @@ Assumes machine running UNIX system, macOS, or linux distribution.
 git clone <url>
 cd dir
 
-// Used macOS for this which is an alias for clang by default
-gcc client.c addy.c
-gcc addy-server.c addy.c
-./a.out
-
-// or
 chmod u+x client server
 ./client
 ./server
