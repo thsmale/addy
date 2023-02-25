@@ -32,6 +32,7 @@ struct Addy {
 int start_server(char *host, char *port);
 char* request(char *host, char *port, char *payload);
 char* recv_request(int fd, char *buffer);
+char* read_request(int fd, char *buffer);
 int write_request(int fd, char *buffer);
 
 /**

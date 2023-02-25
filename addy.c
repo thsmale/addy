@@ -1,6 +1,5 @@
 #include "addy.h"
 
-
 /**
  * Start a server that will listen to connections on a socket
  * By default this is a SOCK_STREAM server to be used with TCP/HTTP
@@ -103,7 +102,7 @@ char* request(char *host, char *port, char *paylaod) {
 	memset(&host_config, 0, sizeof(struct addrinfo));
 	host_config.ai_family = PF_UNSPEC;
 	host_config.ai_socktype = SOCK_STREAM;
-	//host_config.ai_flags = AI_PASSIVE;
+	// No flags are used
 
 	struct addrinfo *hosts;
 	int err_num = 0;
@@ -139,24 +138,38 @@ char* request(char *host, char *port, char *paylaod) {
 		printf("Successfully made a connection to host %s\n", 
 		       sockaddr_tostring(hosts->ai_addr, host_info));
 
-		int bytes_read = 0;
-		if ((bytes_read = read(fd, response, LARGE * sizeof(char))) == -1) {
-		    perror("read");
-		    hosts = hosts->ai_next;
-		    close(fd);
-		    continue;
-		} else if (bytes_read == 0) {
-			printf("End of file reached\n");
-			snprintf(response, sizeof(char) * LARGE, "EOF");
-			return response;
-		} else {
-			response[bytes_read] = '\0';
-			return response;
+		if (read_request(fd, response) == NULL) {
+			hosts = hosts->ai_next;
+			continue;
 		}
+
+		// Successs 
 		close(fd);
 		break;
 	}
 	return response;
+}
+
+/*
+ * Sets and returns the buffer with the payload from the server
+ * @param fd is the file descriptor
+ * @param response is written to buffer 
+ * @return the buffer or NULL on error
+ */
+char* read_request(int fd, char *response) {
+	int bytes_read = 0;
+	if ((bytes_read = read(fd, response, LARGE * sizeof(char))) == -1) {
+		perror("read");
+		close(fd);
+		return NULL;
+	} else if (bytes_read == 0) {
+		printf("End of file reached\n");
+		snprintf(response, sizeof(char) * LARGE, "EOF");
+		return response;
+	} else {
+		response[bytes_read] = '\0';
+		return response;
+	}
 }
 
 /**

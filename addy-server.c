@@ -9,7 +9,6 @@ int main() {
 		printf("Failed to create server\n");
 		return -1;
 	}
-
 	/**
 	 * Accept
 	 * Extracts first connection request on the queue of pending connections
@@ -42,7 +41,7 @@ int main() {
 
 		if (pid == 0) {
 			// Send data to client 
-			if(write_request(new_fd, "ping") == -1) {
+			if(write_request(new_fd, "pong") == -1) {
 				print_callstack();
 			}
 		} 
