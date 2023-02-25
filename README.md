@@ -37,55 +37,53 @@ chmod u+x client server
 ./server
 ```
 
-/**
-	  * man getaddrinfo 
-	  * @var ai_family: Only accept protocols supported by the os
-	  * @var ai_socktype: Stream or datagram (ssh && HTTP use stream sockets)
-	   	- SOCK_STREAM uses TCP: Transmission Control Protocol
-		- SOCK_DGRAM uses UDP: may arrive out of order
-			- Just ignore em or approximate it
-	  * @var flags: first 10 bits matter
-	  	- Which is first?
-		- If you aint first you last
-		- Should fit in 8 bits
-		AI_ADDRCONFIG System decides IVP4 or IPV6
-		AI_ALL 
-		AI_CANNONAME
-		AI_NUMERICHOST hostname is IPv4 or IP6 or DNS should be performed
-		AI_NUMERICSERV
-		AI_PASSIVE 
-			1. TCP: returned socket address structure will use bind
-				- hostname will be null pointer
-				- IP address will be set 
-					- INADDR_ANY for IPv4
-					- IN6ADDR_ANY_INIT for IPv6
-			0. UDP: returned socket address struct will use connect, sendto, sendmsg
-				- if hostname is null pointer && AI_PASSIVE === 0
-					- IP address will be set to loopback addresss 
+### Notes
+
+* man getaddrinfo 
+* @var ai_family: Only accept protocols supported by the os
+* @var ai_socktype: Stream or datagram (ssh && HTTP use stream sockets)
+	- SOCK_STREAM uses TCP: Transmission Control Protocol
+	- SOCK_DGRAM uses UDP: may arrive out of order
+		- Just ignore em or approximate it
+* @var flags: first 10 bits matter
+	- Which is first?
+	- If you aint first you last
+	- Should fit in 8 bits
+	AI_ADDRCONFIG System decides IVP4 or IPV6
+	AI_ALL 
+	AI_CANNONAME
+	AI_NUMERICHOST hostname is IPv4 or IP6 or DNS should be performed
+	AI_NUMERICSERV
+	AI_PASSIVE 
+		1. TCP: returned socket address structure will use bind
+			- hostname will be null pointer
+			- IP address will be set 
+				- INADDR_ANY for IPv4
+				- IN6ADDR_ANY_INIT for IPv6
+		0. UDP: returned socket address struct will use connect, sendto, sendmsg
+			- if hostname is null pointer && AI_PASSIVE === 0
+				- IP address will be set to loopback addresss 
 
 
-		AI_V4MAPPED
-		AI_V4MAPPED_CFG
-		AI_DEFAULT
-		AI_UNUSABLE	
-	  */
+	AI_V4MAPPED
+	AI_V4MAPPED_CFG
+	AI_DEFAULT
+	AI_UNUSABLE	
 
-	/**
-	 * man page
-	 * getaddrinfo gets a list of IP addresses and port names for hostname and servname
-	 * 	- hostname & servname are null pointer or null terminated strings
-	 * 		  TS
-	 * 		  Neither can be null
-	 * 		  One must be string
-	 * 		  Both can be string
-	 * 		  Neither can't be strings
-	 * 	- hostname is valid host name or string IPv4/6 addresss
-	 * 	- servname is port number of service name listed in /etc/services services(5)
-	 TS
-	 char *host = "addy.address"
-	 Map to /etc/hosts localhost
-	 Now go to addy.address in chrome browser
-	 Useful if TLS cert != localhost and running locally
-	 * replaces gethostbyname and getservbyname()
-	 */
+ * man page
+ * getaddrinfo gets a list of IP addresses and port names for hostname and servname
+ * 	- hostname & servname are null pointer or null terminated strings
+ * 		  TS
+ * 		  Neither can be null
+ * 		  One must be string
+ * 		  Both can be string
+ * 		  Neither can't be strings
+ * 	- hostname is valid host name or string IPv4/6 addresss
+ * 	- servname is port number of service name listed in /etc/services services(5)
+ TS
+ char *host = "addy.address"
+ Map to /etc/hosts localhost
+ Now go to addy.address in chrome browser
+ Useful if TLS cert != localhost and running locally
+ * replaces gethostbyname and getservbyname()
 
