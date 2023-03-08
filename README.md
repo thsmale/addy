@@ -1,4 +1,29 @@
 # Addy
+
+## Run
+Assumes machine running UNIX system, macOS, or linux distribution.
+Will create a server listening on http://localhost:3000 by default.
+Will create a client that sends a request to a server and prints out the response.
+
+```
+git clone https://github.com/thsmale/addy
+cd dir
+
+chmod u+x client server
+./client
+./server
+```
+
+## Usage
+```c
+#include <addy.h>
+int server = start_server("localhost", "3000")
+char *response = request("localhost", "3000", "/healthcheck");
+printf("%c\n", response)
+```
+
+### Notes
+
 1. An example HTTPS server
 	- Based off Unix networking
 2. A server using a custom networking protocol
@@ -24,20 +49,6 @@
 	- start_server returns a Server struct
 	- you can add functions to the server struct
 
-
-## Run
-Assumes machine running UNIX system, macOS, or linux distribution.
-
-```
-git clone https://github.com/thsmale/addy
-cd dir
-
-chmod u+x client server
-./client
-./server
-```
-
-### Notes
 
 * man getaddrinfo 
 * ai_family: Only accept protocols supported by the os
