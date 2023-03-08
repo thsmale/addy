@@ -7,7 +7,7 @@ Will create a client that sends a request to a server and prints out the respons
 
 ```
 git clone https://github.com/thsmale/addy
-cd dir
+cd addy
 
 chmod u+x client server
 ./client
