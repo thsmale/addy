@@ -176,6 +176,10 @@ int main() {
 			 * 	- -1: errno is set
 			 */
 			char buffer[LARGE];
+			if (read_recv(new_fd, buffer, sizeof(char)*LARGE,0) != NULL) {
+				printf("%s\n", buffer);
+			}
+			/*
 			int ret = recv(new_fd, buffer, sizeof(char)*LARGE-1, 0);
 			buffer[ret] = '\0';
 			printf("Received %s from client\n", buffer);
@@ -186,7 +190,9 @@ int main() {
 				printf("recv error: \n");
 				exit(-1);
 			}
+			*/
 		}
+		printf("Closing %i\n", new_fd);
 		close(new_fd);
 	}
 

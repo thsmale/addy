@@ -24,7 +24,8 @@ int main() {
 	char client[MEDIUM]; 
 	int new_fd; 
 	while (1) {
-		if((new_fd = accept(fd, &new_connection, &address_len) == -1)) {
+		int new_fd = accept(fd, &new_connection, &address_len);
+		if (new_fd == -1) {
 			perror("accept failed");
 			continue;
 		}
@@ -40,11 +41,15 @@ int main() {
 		} 
 
 		if (pid == 0) {
-			// Send data to client 
-			if(write_request(new_fd, "pong") == -1) {
-				print_callstack();
+			// Receive request from client 
+			char response[LARGE];
+			while(read_recv(new_fd, 
+					response,
+					sizeof(char)*LARGE,
+					0) != NULL) {
+				printf("%s\n", response);
 			}
-		} 
+		}
 
 		// Parent 
 		// Or return from child process
@@ -59,7 +64,6 @@ int main() {
 		} else {
 			printf("Process %i terminated abonrmally\n", pid);
 		}
-		if (close(new_fd) == -1) perror("close");
 	}
 	if (close(fd) == -1) perror("close");
 	return 0;
