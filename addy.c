@@ -104,6 +104,7 @@ char* request(char *host, char *port, char *paylaod) {
 	host_config.ai_socktype = SOCK_STREAM;
 	// No flags are used
 
+	// Configure an HTTP object
 	struct addrinfo *hosts;
 	int err_num = 0;
 	if ((err_num = getaddrinfo(host, port, &host_config, &hosts)) != 0) {
@@ -135,8 +136,11 @@ char* request(char *host, char *port, char *paylaod) {
 		}
 
 
-		printf("Successfully made a connection to host %s\n", 
-		       sockaddr_tostring(hosts->ai_addr, host_info));
+		printf("Successfully made a connection to host %s\n%s\n", 
+		       host, sockaddr_tostring(hosts->ai_addr, host_info));
+
+		// Send the payload to the host
+
 
 		if (read_request(fd, response) == NULL) {
 			hosts = hosts->ai_next;
@@ -257,12 +261,9 @@ char* sockaddr_tostring(struct sockaddr *sockaddy, char *buffer) {
 		print_callstack();
 	}
 
-	int ret = snprintf(buffer, sizeof(char) * MEDIUM,
-			   "struct sockaddr {\n\
-			   \tfamily = %i %s\n\
-			   \taddress = %s\n\
-			   \tport = %i\n\
-			   }",
+
+	char *text = "struct sockaddr {\n\tfamily: %i %s\n\taddress: %s\n\tport: %i\n}";
+	int ret = snprintf(buffer, sizeof(char) * MEDIUM, text,
 			   sockaddy->sa_family, family,
 			   host_str,
 			   htons(port));
