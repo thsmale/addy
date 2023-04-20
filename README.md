@@ -15,6 +15,7 @@ chmod u+x client server
 ```
 
 ## Usage
+Set up a server and make a request to it.
 ```c
 #include <addy.h>
 int server = start_server("localhost", "3000")
