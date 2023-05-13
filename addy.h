@@ -10,10 +10,6 @@
 #include <sys/socket.h>
 #include <errno.h>
 
-// struct client, server, request, 
-struct Addy {
-};
-
 /**
  * TODO: make these more dynamic
  * Buffer sizes
@@ -26,12 +22,28 @@ struct Addy {
 #define LARGE MEDIUM * 4
 #define XL LARGE * 2
 
+// struct client, server, request, 
+struct Addy {
+};
+
+struct Http {
+	char *method;
+	char *route;
+	char *version;
+	char *host;
+	char *port;
+	char *payload;
+	//struct Http *response;
+};
+
 /**
  * server and client functions
 */
 int start_server(char *host, char *port);
-char* request(char *host, char *port, char *payload);
-char* recv_request(int fd, char *buffer);
+char* request(struct Http http;);
+int create_connection(hosts);
+char* recv_request(int fd, char *buffer, size_t length, int flags);
+char *read_recv(int socket, char *buffer, size_t length, int flags);
 char* read_request(int fd, char *buffer);
 int write_request(int fd, char *buffer);
 

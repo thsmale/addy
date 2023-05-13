@@ -97,28 +97,75 @@ int start_server(char *host, char *port) {
  * @param port port or protocol the server is running see /etc/services or services(2)
  * @return the response from the server
  */
-char* request(char *host, char *port, char *paylaod) {
-	struct addrinfo host_config;
-	memset(&host_config, 0, sizeof(struct addrinfo));
+char* request(struct HTTP *http) {
+	int fd = create_connection(http); 
+	if (fd == -1) return NULL;
+	printf("Successfully made a connection to host %s\n%s\n", 
+	       http->host, 
+	       sockaddr_tostring(hosts->ai_addr, host_info));
+
+	//Format Request
+	char *startline = "%s %s %s"; // method, route, version;
+	char *payload_format = "%s %s %s\r\n%s\r\n\r\n";
+	char payload[MEDIUM];
+	// Todo MERGE to one function so don't have to pass size twice
+	int ret = snprintf(payload, sizeof(char) * MEDIUM, 
+			   payload_format, 
+			   http.method, http.route, http.version,
+		       	   http.host);
+	handle_snprintf(ret, sizeof(char) * MEDIUM);
+
+
+	// Send the payload to the host
+	int ret = write_request(fd, http.payload);
+	if (ret < 0) {
+		return NULL;
+	}
+
+	char response[MEDIUM];
+	while (read_recv(fd, response, sizeof(char)*MEDIUM, 0) != NULL) {
+		printf("%s\n", response);
+	}
+
+	// Successs 
+	// close(fd);
+	break;
+}
+return response;
+}
+
+/**
+ * http.host the url to connect to
+ * http.port the port the url is hosted on
+ * return -1 on failure 
+ * return a descriptor [0, inf) referencing the socket
+ */
+int create_connection(struct HTTP *http) {
+	struct addrinfo req_config;
+	memset(&req_config, 0, sizeof(struct addrinfo));
 	host_config.ai_family = PF_UNSPEC;
 	host_config.ai_socktype = SOCK_STREAM;
 	// No flags are used
 
-	// Configure an HTTP object
+	// Get a list of IP address and ports 
 	struct addrinfo *hosts;
-	int err_num = 0;
-	if ((err_num = getaddrinfo(host, port, &host_config, &hosts)) != 0) {
-		fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(err_num));
-		return NULL;
+	int err = getaddrinfo(http.host, http.port, &req_config, &hosts);
+	if (err != 0) {
+		fprintf(stderr,	"getaddrinfo failed: %s\n", 
+			gai_strerror(err_num));
+		return -1;
 	}
 
+	// Connect to the first IP possible
 	char *response = malloc(sizeof(char) * LARGE);
+	int fd = -1;
 	while (hosts) {
-		int fd;
 		char host_info[MEDIUM];
 		sockaddr_tostring(hosts->ai_addr, host_info);
-		// fd being any value in the range (-infinity, 0) will equal false
-		if ((fd = socket(hosts->ai_family, hosts->ai_socktype, hosts->ai_protocol)) < 0) {
+		fd = 
+		if ((fd = socket(hosts->ai_family, 
+				 hosts->ai_socktype, 
+				 hosts->ai_protocol)) < 0) {
 			printf("unable to make socket %i for %s because %s\n", fd, host_info, strerror(errno));
 			//strerror(errno);
 			perror("socket error");
@@ -134,24 +181,9 @@ char* request(char *host, char *port, char *paylaod) {
 			close(fd);
 			continue;
 		}
-
-
-		printf("Successfully made a connection to host %s\n%s\n", 
-		       host, sockaddr_tostring(hosts->ai_addr, host_info));
-
-		// Send the payload to the host
-
-
-		if (read_request(fd, response) == NULL) {
-			hosts = hosts->ai_next;
-			continue;
-		}
-
-		// Successs 
-		close(fd);
 		break;
 	}
-	return response;
+	return fd;
 }
 
 /*
@@ -176,14 +208,30 @@ char* read_request(int fd, char *response) {
 	}
 }
 
+char *read_recv(int socket, char *buffer, size_t length, int flags) {
+	int ret = recv(socket, buffer, length-1, flags);
+	if (ret == 0) {
+		printf("peer on socket %i closed connection\n", socket);
+		close(socket);
+		return NULL;
+	}
+	if (ret == -1) {
+		perror("recv");
+		close(socket);
+		return NULL;
+	}
+	buffer[ret] = '\0';
+	return buffer;
+}
+
 /**
  * Reads data from a socket
  * Overwrites the buffer and returns it
  * @param fd is a socket file descriptor 
  * @returns the buffer
  */
-char* recv_request(int fd, char *buffer) {
-	int bytes_recv = recv(fd, &buffer, sizeof(char)*strlen(buffer)-1, 0);
+char* recv_request(int fd, char *buffer, size_t length, int flags) {
+	int bytes_recv = recv(fd, &buffer, length, flags);
 
 	if (bytes_recv == -1) {
 		printf("pid %i socket %i recv failed because %s\n",
@@ -204,6 +252,7 @@ char* recv_request(int fd, char *buffer) {
 
 // Send data to client 
 int write_request(int fd, char *buffer) {
+	printf("Sending request...\n%s\n", buffer);
 	int bytes = 0;
 	if((bytes = write(fd, buffer, strlen(buffer) * sizeof(char))) == -1) {
 		perror("write");
