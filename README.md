@@ -15,18 +15,37 @@ chmod u+x client server
 ```
 
 ## Usage
-Set up a server and make a request to it.
-```c
+Create an HTTP server and return a file descriptor to listen on.
+```
 #include <addy.h>
-int server = start_server("localhost", "3000")
-char *response = request("localhost", "3000", "/healthcheck");
-printf("%c\n", response)
+int fd = start_server("localhost", "3000")
+```
+
+Make a HTTP request.
+Note this request returns the google homepage. 
+A better usage is making a request to an API that returns csv data.
+```
+#include <addy.h>
+
+// Configure a HTTP object
+struct Http http;
+http.method = "GET";
+http.route = "/index.html";
+http.host = "www.google.com";
+http.port = "80";
+
+char *response = request(http);
+printf("%c\n", response);
 ```
 
 ### Notes
 
 1. An example HTTPS server
 	- Based off Unix networking
+    - Add route handlers and request configurations
+        - Use callbacks for route handlers
+    - It will parse HTTP requests for you
+    - server script has ability to read config file as no code option 
 2. A server using a custom networking protocol
 	- Built off on top of existing Unix networking
 	- Built in HTTP headers for request and validations
@@ -49,6 +68,7 @@ printf("%c\n", response)
 		 */
 	- start_server returns a Server struct
 	- you can add functions to the server struct
+    - create a function that you can pass configurations too
 
 
 * man getaddrinfo 
