@@ -104,18 +104,21 @@ char* request(struct Http http) {
 	//Format Request
 	char *startline = "%s %s %s"; // method, route, version;
 	char *payload_format = "%s %s %s\r\n%s\r\n\r\n";
-	char payload[MEDIUM];
+	char *req_format = "%s %s %s\r\n%s%s\r\n\r\n";
+	char req[LARGE];
 	// Todo MERGE to one function so don't have to pass size twice
-	int ret = snprintf(payload, sizeof(char) * MEDIUM, 
-			   payload_format, 
+	int ret = snprintf(req, sizeof(char) * LARGE, 
+			   req_format, 
 			   http.method, http.route, http.version,
-		       	   http.host);
-	handle_snprintf(ret, sizeof(char) * MEDIUM);
+		       	   http.headers,
+			   http.payload);
+	handle_snprintf(ret, sizeof(char) * LARGE);
 
 
 	// Send the payload to the host
-	ret = write_request(fd, http.payload);
+	ret = write_request(fd, req);
 	if (ret < 0) {
+		close(fd);
 		return NULL;
 	}
 
@@ -125,7 +128,7 @@ char* request(struct Http http) {
 	}
 
 	// Successs 
-	// close(fd);
+	close(fd);
 	return response;
 }
 
@@ -172,6 +175,7 @@ int create_connection(struct Http http) {
 			perror("connect error");
 			hosts = hosts->ai_next;
 			close(fd);
+			fd = -1;
 			continue;
 		}
 
@@ -209,12 +213,10 @@ char *read_recv(int socket, char *buffer, size_t length, int flags) {
 	int ret = recv(socket, buffer, length-1, flags);
 	if (ret == 0) {
 		printf("peer on socket %i closed connection\n", socket);
-		close(socket);
 		return NULL;
 	}
 	if (ret == -1) {
 		perror("recv");
-		close(socket);
 		return NULL;
 	}
 	buffer[ret] = '\0';

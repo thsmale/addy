@@ -32,6 +32,7 @@ struct Http {
 	char *version;
 	char *host;
 	char *port;
+	char *headers;
 	char *payload;
 	//struct Http *response;
 };
