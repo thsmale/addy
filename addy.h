@@ -40,8 +40,8 @@ struct Http {
  * server and client functions
 */
 int start_server(char *host, char *port);
-char* request(struct Http http;);
-int create_connection(hosts);
+char* request(struct Http http);
+int create_connection(struct Http http);
 char* recv_request(int fd, char *buffer, size_t length, int flags);
 char *read_recv(int socket, char *buffer, size_t length, int flags);
 char* read_request(int fd, char *buffer);

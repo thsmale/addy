@@ -97,12 +97,9 @@ int start_server(char *host, char *port) {
  * @param port port or protocol the server is running see /etc/services or services(2)
  * @return the response from the server
  */
-char* request(struct HTTP *http) {
+char* request(struct Http http) {
 	int fd = create_connection(http); 
 	if (fd == -1) return NULL;
-	printf("Successfully made a connection to host %s\n%s\n", 
-	       http->host, 
-	       sockaddr_tostring(hosts->ai_addr, host_info));
 
 	//Format Request
 	char *startline = "%s %s %s"; // method, route, version;
@@ -117,7 +114,7 @@ char* request(struct HTTP *http) {
 
 
 	// Send the payload to the host
-	int ret = write_request(fd, http.payload);
+	ret = write_request(fd, http.payload);
 	if (ret < 0) {
 		return NULL;
 	}
@@ -129,9 +126,7 @@ char* request(struct HTTP *http) {
 
 	// Successs 
 	// close(fd);
-	break;
-}
-return response;
+	return response;
 }
 
 /**
@@ -140,19 +135,19 @@ return response;
  * return -1 on failure 
  * return a descriptor [0, inf) referencing the socket
  */
-int create_connection(struct HTTP *http) {
-	struct addrinfo req_config;
-	memset(&req_config, 0, sizeof(struct addrinfo));
-	host_config.ai_family = PF_UNSPEC;
-	host_config.ai_socktype = SOCK_STREAM;
+int create_connection(struct Http http) {
+	struct addrinfo config;
+	memset(&config, 0, sizeof(struct addrinfo));
+	config.ai_family = PF_UNSPEC;
+	config.ai_socktype = SOCK_STREAM;
 	// No flags are used
 
 	// Get a list of IP address and ports 
 	struct addrinfo *hosts;
-	int err = getaddrinfo(http.host, http.port, &req_config, &hosts);
+	int err = getaddrinfo(http.host, http.port, &config, &hosts);
 	if (err != 0) {
 		fprintf(stderr,	"getaddrinfo failed: %s\n", 
-			gai_strerror(err_num));
+			gai_strerror(err));
 		return -1;
 	}
 
@@ -162,12 +157,10 @@ int create_connection(struct HTTP *http) {
 	while (hosts) {
 		char host_info[MEDIUM];
 		sockaddr_tostring(hosts->ai_addr, host_info);
-		fd = 
-		if ((fd = socket(hosts->ai_family, 
-				 hosts->ai_socktype, 
-				 hosts->ai_protocol)) < 0) {
-			printf("unable to make socket %i for %s because %s\n", fd, host_info, strerror(errno));
-			//strerror(errno);
+		fd = socket(hosts->ai_family, hosts->ai_socktype, hosts->ai_protocol);
+		if (fd < 0) {
+			printf("unable to make socket %i for %s because %s\n", 
+			       fd, host_info, strerror(errno));
 			perror("socket error");
 			hosts = hosts->ai_next;
 			continue;
@@ -181,6 +174,10 @@ int create_connection(struct HTTP *http) {
 			close(fd);
 			continue;
 		}
+
+		printf("Successfully made a connection to host %s\n%s\n", 
+		       http.host, 
+		       sockaddr_tostring(hosts->ai_addr, host_info));
 		break;
 	}
 	return fd;
