@@ -84,7 +84,7 @@ int start_server(char *host, char *port) {
 		}
 
 		// Successfully made a socket
-		printf("Server listening on file descripor %i and host %s\n", fd, host_info);
+		printf("Server listening on file descriptor %i and host %s\n", fd, host_info);
 		break;
 	}
 
