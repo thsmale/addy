@@ -84,7 +84,7 @@ int start_server(char *host, char *port) {
 		}
 
 		// Successfully made a socket
-		printf("Server listening on file descripor %i and host %s\n", fd, host_info);
+		printf("Server listening on file descriptor %i and host %s\n", fd, host_info);
 		break;
 	}
 
@@ -97,9 +97,9 @@ int start_server(char *host, char *port) {
  * @param port port or protocol the server is running see /etc/services or services(2)
  * @return the response from the server
  */
-char* request(struct Http http) {
+int request(struct Http http, char *response) {
 	int fd = create_connection(http); 
-	if (fd == -1) return NULL;
+	if (fd == -1) return fd;
 
 	//Format Request
 	char *startline = "%s %s %s"; // method, route, version;
@@ -109,8 +109,10 @@ char* request(struct Http http) {
 	// Todo MERGE to one function so don't have to pass size twice
 	int ret = snprintf(req, sizeof(char) * LARGE, 
 			   req_format, 
-			   http.method, http.route, http.version,
-		       	   http.headers,
+			   http.method,
+			   http.route,
+			   http.version,
+		       http.headers,
 			   http.payload);
 	handle_snprintf(ret, sizeof(char) * LARGE);
 
@@ -119,17 +121,16 @@ char* request(struct Http http) {
 	ret = write_request(fd, req);
 	if (ret < 0) {
 		close(fd);
-		return NULL;
+		return -1;
 	}
 
-	char response[MEDIUM];
 	while (read_recv(fd, response, sizeof(char)*MEDIUM, 0) != NULL) {
 		printf("%s\n", response);
 	}
 
 	// Successs 
 	close(fd);
-	return response;
+	return 1;
 }
 
 /**
