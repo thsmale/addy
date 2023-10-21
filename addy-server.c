@@ -31,7 +31,7 @@ int main() {
 		}
 
 		sockaddr_tostring(&new_connection, client);
-		printf("Server accepted new conection from %s\n", client);
+		printf("Server accepted new connection from %s\n", client);
 
 		pid_t pid = fork();
 		if (pid < 0) {
@@ -42,13 +42,20 @@ int main() {
 
 		if (pid == 0) {
 			// Receive request from client 
-			char response[LARGE];
-			while(read_recv(new_fd, 
-					response,
+			char request[LARGE];
+			char *res = read_recv(new_fd, 
+					request,
 					sizeof(char)*LARGE,
-					0) != NULL) {
-				printf("%s\n", response);
+					0);
+			if (res == NULL) {
+				printf("error reading request");
+				close(new_fd);
 			}
+			printf("%s\n", request);
+			printf("done reading request\n");
+			char *response = "HTTP/1.1 200 ok\r\nConnection: close\r\nContent-Type: text/xml; charset=utf-8\r\nContent-Length: 12\r\n\r\nhello world\r\n\r\n";
+			write_request(new_fd, response);
+			close(new_fd);
 		}
 
 		// Parent 
