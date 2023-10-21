@@ -262,6 +262,7 @@ int write_request(int fd, char *buffer) {
 		fprintf(stderr, "Did not print entire buffer\n");
 		return -1;
 	}
+	printf("Done sending request\n");
 	return 0;
 }
 
