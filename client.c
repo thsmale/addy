@@ -1,17 +1,18 @@
 #include "addy.h"
 
 int main() {
-	struct Http http;
-	http.method = "GET";
-	http.route = "/";
-	http.version = "HTTP/1.1";
-	http.host = "localhost";
-	http.port = "3000";
-	http.headers = "host: localhost:3000";
-	http.payload = "";
-	
-	char *response = request(http);
-	if (response == NULL) {
+	struct Http options;
+	options.method = "GET";
+	options.route = "/";
+	options.version = "HTTP/1.1";
+	options.host = "localhost";
+	options.port = "3000";
+	options.headers = "host: localhost:3000";
+	options.payload = "";
+
+	char response[MEDIUM];
+	int success = request(options, response);
+	if (!success) {
 		print_callstack();
 		return -1;
 	}
