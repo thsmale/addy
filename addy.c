@@ -102,8 +102,6 @@ int request(struct Http http, char *response) {
 	if (fd == -1) return fd;
 
 	//Format Request
-	char *startline = "%s %s %s"; // method, route, version;
-	char *payload_format = "%s %s %s\r\n%s\r\n\r\n";
 	char *req_format = "%s %s %s\r\n%s%s\r\n\r\n";
 	char req[LARGE];
 	// Todo MERGE to one function so don't have to pass size twice
@@ -124,9 +122,12 @@ int request(struct Http http, char *response) {
 		return -1;
 	}
 
-	while (read_recv(fd, response, sizeof(char)*MEDIUM, 0) != NULL) {
-		printf("%s\n", response);
+	ret = read_recv(fd, response, sizeof(char)*MEDIUM, 0);
+	if (!ret) {
+		close(fd);
+		return -1;
 	}
+	printf("%s\n", response);
 
 	// Successs 
 	close(fd);
@@ -210,18 +211,22 @@ char* read_request(int fd, char *response) {
 	}
 }
 
-char *read_recv(int socket, char *buffer, size_t length, int flags) {
+/**
+ * Read the request from the client
+ * return <= 0 if an error occurred
+*/
+int read_recv(int socket, char *buffer, size_t length, int flags) {
 	int ret = recv(socket, buffer, length-1, flags);
 	if (ret == 0) {
 		printf("peer on socket %i closed connection\n", socket);
-		return NULL;
+		return 0;
 	}
 	if (ret == -1) {
 		perror("recv");
-		return NULL;
+		return -1;
 	}
 	buffer[ret] = '\0';
-	return buffer;
+	return ret;
 }
 
 /**

@@ -34,6 +34,8 @@ struct Http {
 	char *port;
 	char *headers;
 	char *payload;
+	int status_code;
+	char *status_text;
 	//struct Http *response;
 };
 
@@ -44,7 +46,7 @@ int start_server(char *host, char *port);
 int request(struct Http http, char *response);
 int create_connection(struct Http http);
 char* recv_request(int fd, char *buffer, size_t length, int flags);
-char *read_recv(int socket, char *buffer, size_t length, int flags);
+int read_recv(int socket, char *buffer, size_t length, int flags);
 char* read_request(int fd, char *buffer);
 int write_request(int fd, char *buffer);
 
