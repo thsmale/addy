@@ -42,19 +42,37 @@ int main() {
 
 		if (pid == 0) {
 			// Receive request from client 
+			printf("reading request\n");
 			char request[LARGE];
-			char *res = read_recv(new_fd, 
+			int ret = read_recv(new_fd,
 					request,
 					sizeof(char)*LARGE,
 					0);
-			if (res == NULL) {
+			if (!ret) {
 				printf("error reading request");
 				close(new_fd);
 			}
 			printf("%s\n", request);
 			printf("done reading request\n");
-			char *response = "HTTP/1.1 200 ok\r\nConnection: close\r\nContent-Type: text/xml; charset=utf-8\r\nContent-Length: 12\r\n\r\nhello world\r\n\r\n";
-			write_request(new_fd, response);
+			struct Http response;
+			response.version = "HTTP/1.1";
+			response.status_code = 200;
+			response.status_text = "ok";
+			response.headers = "Connection: close\r\nContent-Type: text/xml; charset=utf-8\r\nContent-Length: 12";
+			response.payload = "hello world";
+			/**
+			 * format the HTTP Response
+			 * startline, headers, body
+ 			 * https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages#http_responses
+			*/
+			char *res_format = "%s %i %s\r\n%s\r\n\r\n%s\r\n\r\n";
+			char res[MEDIUM];
+			ret = snprintf(res, sizeof(char) * MEDIUM, res_format,
+							    response.version, response.status_code, response.status_text,
+								response.headers,
+								response.payload);
+			handle_snprintf(ret, sizeof(char) * MEDIUM);
+			write_request(new_fd, res);
 			close(new_fd);
 		}
 
