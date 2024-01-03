@@ -4,7 +4,13 @@
 #include <signal.h>
 
 int main() {
-	int fd = start_server("localhost", "8000");
+	char *host = getenv("ADDY_HOST");
+	char *port = getenv("PORT");
+	if (!host)
+		host = "localhost";
+	if (!port)
+		port = "3000";
+	int fd = start_server(host, port);
 	if (fd < 1) {
 		printf("Failed to create server\n");
 		return -1;

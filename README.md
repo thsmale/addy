@@ -40,6 +40,11 @@ printf("%c\n", response);
 
 ## Test
 These test that the addy server or client is HTTP compatible.
+One can configure the unit tests by setting the port and hostname like this.
+```
+$ export ADDY_HOST=localhost
+$ export PORT=3000
+```
 
 ### hapi
 hapi is web application server framework for HTTP that can create HTTP requests and receive HTTP requests.
