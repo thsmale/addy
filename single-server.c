@@ -22,8 +22,7 @@ int main() {
 	struct sockaddr new_connection;
 	socklen_t address_len = sizeof(new_connection);
 	char client[MEDIUM]; 
-	int new_fd; 
-	new_fd = accept(fd, &new_connection, &address_len);
+	int new_fd = accept(fd, &new_connection, &address_len);
 	/*
 	if((new_fd = accept(fd, &new_connection, &address_len) == -1)) {
 		perror("accept failed");
@@ -42,6 +41,6 @@ int main() {
 	}
 
 	// Close the connection after receiving request 
-	if (close(fd) == -1) perror("close");
+	//if (close(fd) == -1) perror("close");
 	return 0;
 }
