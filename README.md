@@ -38,6 +38,19 @@ char *response = request(http);
 printf("%c\n", response);
 ```
 
+## Test
+These test that the addy server or client is HTTP compatible.
+
+### hapi
+hapi is web application server framework for HTTP that can create HTTP requests and receive HTTP requests.
+
+```
+./server
+cd test/hapi
+# Testing the addy server
+npm run test-server
+```
+
 ### Notes
 
 1. An example HTTPS server
