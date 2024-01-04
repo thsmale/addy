@@ -128,7 +128,7 @@ int request(struct Http http, struct Http *response) {
 		close(fd);
 		return -1;
 	}
-	logger(DEBUG, "Server response...");
+	logger(TRACE, "Server response...");
 	logger(DEBUG, server_response);
 	char *serv_response = server_response;
 
@@ -155,7 +155,7 @@ int request(struct Http http, struct Http *response) {
 		}
 		if (i == 0) {
 			// Get status line from response
-			logger(DEBUG, "Getting status line...");
+			logger(TRACE, "Getting status line...");
 			int j = 0;
 			while ((status_line = strsep(&token, " ")) != NULL) {
 				if (j == 0) {
@@ -178,7 +178,7 @@ int request(struct Http http, struct Http *response) {
 			char status_line[SMALL];
 			int ret = snprintf(status_line, sizeof(char) * SMALL, "%s %i %s", response->version, response->status_code, response->status_text);
 			handle_snprintf(ret, sizeof(char) * SMALL);
-			logger(DEBUG, "Setting status line...");
+			logger(TRACE, "Setting status line...");
 			logger(DEBUG, status_line);
 			i += 1;
 			continue;
@@ -195,7 +195,7 @@ int request(struct Http http, struct Http *response) {
 				int ret = snprintf(headers, sizeof(char) * LARGE, "%s\r\n%s", headers, token);
 				handle_snprintf(ret, sizeof(char) * LARGE);
 			}
-			logger(DEBUG, "Received response header...");
+			logger(TRACE, "Received response header...");
 			logger(DEBUG, token);
 			response->headers = headers;
 		}
@@ -208,9 +208,9 @@ int request(struct Http http, struct Http *response) {
 			}
 			payload[j] = '\0';
 			response->payload = payload;
-			logger(DEBUG, "Parsed the following response headers...");
+			logger(TRACE, "Parsed the following response headers...");
 			logger(DEBUG, response->headers);
-			logger(DEBUG, "Parsed the following response payload...");
+			logger(TRACE, "Parsed the following response payload...");
 			logger(DEBUG, response->payload);
 			break;
 		}
@@ -349,7 +349,7 @@ char* recv_request(int fd, char *buffer, size_t length, int flags) {
 
 // Send data to client 
 int write_request(int fd, char *buffer) {
-	logger(DEBUG, "Sending request...");
+	logger(TRACE, "Sending request...");
 	logger(DEBUG, buffer);
 	int bytes = 0;
 	if((bytes = write(fd, buffer, strlen(buffer) * sizeof(char))) == -1) {
@@ -361,7 +361,7 @@ int write_request(int fd, char *buffer) {
 		logger(ERROR, "Did not print entire buffer\n");
 		return -1;
 	}
-	logger(DEBUG, "Done sending request...\n");
+	logger(TRACE, "Done sending request...\n");
 	return 0;
 }
 
@@ -538,7 +538,7 @@ void print_host(struct addrinfo *addy_info) {
 }
 
 void logger(int level, char* message) {
-	if (LOG_LEVEL < level) {
+	if (LOG_LEVEL <= level) {
 		if (level == TRACE) {
 			printf("TRACE: %s\n", message);
 		} else if (level == DEBUG) {

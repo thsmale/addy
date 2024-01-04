@@ -27,7 +27,7 @@
  * any log exceeding LOG_LEVEL will be printed to stdout or stderr
  * i.e set LOG_LEVEL to zero to log nothing
 */
-#define LOG_LEVEL 40
+#define LOG_LEVEL 10
 #define TRACE 10
 #define DEBUG 20
 #define INFO 30
