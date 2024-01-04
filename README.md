@@ -28,15 +28,23 @@ A better usage is making a request to an API that returns csv data.
 #include <addy.h>
 
 // Configure a HTTP object
-struct Http http;
-http.method = "GET";
-http.route = "/index.html";
-http.host = "www.google.com";
-http.port = "80";
+struct Http options;
+options.method = "GET";
+options.route = "/index.html";
+options.host = "www.google.com";
+options.port = "80";
 
-char *response = request(http);
-printf("%c\n", response);
+struct Http response;
+int response = request(http, &response);
+printf("Response payload: %s\n", response.payload);
 ```
+
+## Logging
+One can adjust the `LOG_LEVEL` to control what kinds of logs they see in stdout and stderr from the addy server or request framework.
+|            |       |       |      |      |       |
+|:-----------|-------|-------|------|------|-------:|
+| **Level:** | TRACE | DEBUG | INFO | WARN | ERROR |
+| **Value:** | 10    | 20    | 30   | 40   | 50    |
 
 ## Test
 These test that the addy server or client is HTTP compatible.

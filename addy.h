@@ -22,6 +22,18 @@
 #define LARGE MEDIUM * 4
 #define XL LARGE * 2
 
+/**
+ * Macros for logging
+ * any log exceeding LOG_LEVEL will be printed to stdout or stderr
+ * i.e set LOG_LEVEL to zero to log nothing
+*/
+#define LOG_LEVEL 10
+#define TRACE 10
+#define DEBUG 20
+#define INFO 30
+#define WARN 40
+#define ERROR 50
+
 // struct client, server, request, 
 struct Addy {
 };
@@ -59,6 +71,7 @@ int write_request(int fd, char *buffer);
 void print_callstack();
 void handle_snprintf(int ret, size_t size);
 char* sockaddr_tostring(struct sockaddr *addy, char *ret);
+void logger(int level, char* message);
 
 /**
  * LOG file
