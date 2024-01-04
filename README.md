@@ -16,7 +16,7 @@ chmod u+x client server
 
 ## Usage
 Create an HTTP server and return a file descriptor to listen on.
-```
+```c
 #include <addy.h>
 int fd = start_server("localhost", "3000")
 ```
@@ -24,7 +24,7 @@ int fd = start_server("localhost", "3000")
 Make a HTTP request.
 Note this request returns the google homepage. 
 A better usage is making a request to an API that returns csv data.
-```
+```c
 #include <addy.h>
 
 // Configure a HTTP object
