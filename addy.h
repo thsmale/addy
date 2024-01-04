@@ -59,6 +59,7 @@ int write_request(int fd, char *buffer);
 void print_callstack();
 void handle_snprintf(int ret, size_t size);
 char* sockaddr_tostring(struct sockaddr *addy, char *ret);
+void logger(char* level, char* message);
 
 /**
  * LOG file
