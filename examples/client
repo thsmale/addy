@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gcc client.c addy.c -o client.out
+gcc client.c ../addy.c -o client.out
 if [ $? -eq 0 ] 
 then 
 	./client.out 

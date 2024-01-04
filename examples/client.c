@@ -1,4 +1,4 @@
-#include "addy.h"
+#include "../addy.h"
 
 int main() {
 	struct Http options;
@@ -22,13 +22,13 @@ int main() {
 	options.headers = headers;
 	options.payload = "";
 
-	char response[MEDIUM];
-	int success = request(options, response);
+	struct Http response;
+	int success = request(options, &response);
 	if (!success) {
 		print_callstack();
 		return -1;
 	}
-	printf("response: %s\n", response);
+	printf("response: %s\n", response.payload);
 	return 0;
 }
 

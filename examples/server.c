@@ -1,4 +1,4 @@
-#include "addy.h"
+#include "../addy.h"
 #include <time.h>
 #include <sys/wait.h>
 #include <signal.h>
