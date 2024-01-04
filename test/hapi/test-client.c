@@ -1,10 +1,15 @@
-#include "addy.h"
+/**
+ * start the hapi server
+ * send a request, then if the payload does not match hapi server response throw error
+*/
+
+#include "../../addy.h"
 
 int main() {
 	struct Http options;
 	char *host = getenv("ADDY_HOST");
 	char *port = getenv("PORT");
-	char headers[SMALL];
+    char headers[SMALL];
 	if (!host) {
 		host = "localhost";
 	}
@@ -22,13 +27,19 @@ int main() {
 	options.headers = headers;
 	options.payload = "";
 
-	char response[MEDIUM];
-	int success = request(options, response);
+	struct Http response;
+	int success = request(options, &response);
 	if (!success) {
 		print_callstack();
 		return -1;
 	}
-	printf("response: %s\n", response);
+	printf("response status_code: %d\n", response.status_code);
+	printf("response status_text: %s\n", response.status_text);
+	printf("response headers: %s\n", response.headers);
+	printf("response payload: %s\n", response.payload);
+	if (strcmp(response.payload, "Hello World!") == 0) {
+		printf("%s", "TEST SUCCESS\n");
+	}
 	return 0;
 }
 

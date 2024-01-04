@@ -43,7 +43,7 @@ struct Http {
  * server and client functions
 */
 int start_server(char *host, char *port);
-int request(struct Http http, char *response);
+int request(struct Http http, struct Http* response);
 int create_connection(struct Http http);
 char* recv_request(int fd, char *buffer, size_t length, int flags);
 int read_recv(int socket, char *buffer, size_t length, int flags);

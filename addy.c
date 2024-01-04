@@ -93,11 +93,11 @@ int start_server(char *host, char *port) {
 
 /*
  * Send data to a server
- * @param host ip address to send data to
- * @param port port or protocol the server is running see /etc/services or services(2)
- * @return the response from the server
+ * @param http struct with host ip address to send data to
+ * @param http struct with response from server
+ * @return a int > 0 if successful
  */
-int request(struct Http http, char *response) {
+int request(struct Http http, struct Http *response) {
 	int fd = create_connection(http); 
 	if (fd == -1) return fd;
 
@@ -122,13 +122,103 @@ int request(struct Http http, char *response) {
 		return -1;
 	}
 
-	ret = read_recv(fd, response, sizeof(char)*MEDIUM, 0);
+	char server_response[MEDIUM];
+	ret = read_recv(fd, server_response, sizeof(char)*MEDIUM, 0);
 	if (!ret) {
 		close(fd);
 		return -1;
 	}
-	printf("%s\n", response);
+	printf("Server response...\n%s\n", server_response);
+	char *serv_response = server_response;
 
+	// Get status line, headers and response payload
+	char *token;
+	char *status_line;
+	char *delim = "\0";
+	int i = 0;
+	int carriage_return = 0;
+	char headers[LARGE];
+	headers[0] = '\0';
+	char payload[LARGE];
+	while ((token = strsep(&serv_response, "\r\n")) != NULL) {
+		if (strcmp(token, delim) != 0) {
+			printf("token: %s\n", token);
+			carriage_return = 0;
+		}
+		if (strcmp(token, delim) == 0) {
+			printf("delimeter %i\n", carriage_return);
+			carriage_return += 1;
+			if ( carriage_return == 3) {
+				i += 1;
+			}
+			continue;
+		}
+		if (i == 0) {
+			// Get status line from response
+			printf("Getting status line...\n");
+			int j = 0;
+			while ((status_line = strsep(&token, " ")) != NULL) {
+				if (j == 0) {
+					response->version= status_line;
+				} else if(j == 1) {
+					response->status_code = atoi(status_line);
+				} else if(j == 2) {
+					response->status_text = status_line;
+				} else {
+					// Make this part of some print_response util function
+					printf("Status line response only expecting 3 fields\n");
+					printf("---- %s\n", response->version);
+					printf("---- %i\n", response->status_code);
+					printf("---- %s\n", response->status_text);
+					break;
+				}
+				j += 1;
+			}
+			printf("||||||||||||||\n");
+			printf("Set status line\n");
+			printf("---- HTTP Version: %s\n", response->version);
+			printf("---- HTTP Status Code: %i\n", response->status_code);
+			printf("---- HTTP Status Text: %s\n", response->status_text);
+			printf("||||||||||||||\n");
+			i += 1;
+			continue;
+		}
+		if (i == 1) {
+			// Get response headers
+			if (headers[0] == '\0') {
+				int j = 0;
+				while (token[j]) {
+					headers[j] = token[j];
+					j += 1;
+				}
+			} else {
+				int ret = snprintf(headers, sizeof(char) * LARGE, "%s\r\n%s", headers, token);
+				handle_snprintf(ret, sizeof(char) * LARGE);
+			}
+			printf("--RESPONSE HEADER--\n");
+			printf("%s\n", token);
+			printf("***********\n");
+			printf("%s\n", headers);
+			printf("-------------------\n\n");
+			response->headers = headers;
+		}
+		if (i == 2) {
+			// Get response payload
+			int j = 0;
+			while (token[j]) {
+				payload[j] = token[j];
+				j += 1;
+			}
+			payload[j] = '\0';
+			response->payload = payload;
+			printf("^^^^^^^^^^^^^^^Response headers^^^^^^^^^^^^^^^^\n");
+			printf("%s\n", response->headers);
+			printf("^^^^^^^^^^^^^^^Response payload^^^^^^^^^^^^^^^^\n");
+			printf("%s\n", response->payload);
+			printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+			break;
+		}
+	}
 	// Successs 
 	close(fd);
 	return 1;
