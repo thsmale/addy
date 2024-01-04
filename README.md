@@ -52,6 +52,10 @@ hapi is web application server framework for HTTP that can create HTTP requests 
 ```
 ./server
 cd test/hapi
-# Testing the addy server
+# Testing the HTTP addy server
 npm run test-server
+# Testing HTTP addy requests
+node server.js
+chmod u+x test-client
+./test-client
 ```
