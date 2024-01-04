@@ -128,8 +128,8 @@ int request(struct Http http, struct Http *response) {
 		close(fd);
 		return -1;
 	}
-	logger("DEBUG", "Server response...");
-	logger("DEBUG", server_response);
+	logger(DEBUG, "Server response...");
+	logger(DEBUG, server_response);
 	char *serv_response = server_response;
 
 	// Get status line, headers and response payload
@@ -155,7 +155,7 @@ int request(struct Http http, struct Http *response) {
 		}
 		if (i == 0) {
 			// Get status line from response
-			logger("DEBUG", "Getting status line...");
+			logger(DEBUG, "Getting status line...");
 			int j = 0;
 			while ((status_line = strsep(&token, " ")) != NULL) {
 				if (j == 0) {
@@ -166,11 +166,11 @@ int request(struct Http http, struct Http *response) {
 					response->status_text = status_line;
 				} else {
 					// Make this part of some print_response util function
-					logger("WARN", "Status line response only expecting 3 fields\n");
+					logger(WARN, "Status line response only expecting 3 fields\n");
 					char msg[LARGE];
 					int ret = snprintf(status_line, sizeof(char) * LARGE, "Received the following status line: %s %i %s", response->version, response->status_code, response->status_text);
 					handle_snprintf(ret, sizeof(char) * LARGE);
-					logger("WARN", msg);
+					logger(WARN, msg);
 					break;
 				}
 				j += 1;
@@ -178,8 +178,8 @@ int request(struct Http http, struct Http *response) {
 			char status_line[SMALL];
 			int ret = snprintf(status_line, sizeof(char) * SMALL, "%s %i %s", response->version, response->status_code, response->status_text);
 			handle_snprintf(ret, sizeof(char) * SMALL);
-			logger("DEBUG", "Setting status line...");
-			logger("DEBUG", status_line);
+			logger(DEBUG, "Setting status line...");
+			logger(DEBUG, status_line);
 			i += 1;
 			continue;
 		}
@@ -195,8 +195,8 @@ int request(struct Http http, struct Http *response) {
 				int ret = snprintf(headers, sizeof(char) * LARGE, "%s\r\n%s", headers, token);
 				handle_snprintf(ret, sizeof(char) * LARGE);
 			}
-			logger("DEBUG", "Received response header...");
-			logger("DEBUG", token);
+			logger(DEBUG, "Received response header...");
+			logger(DEBUG, token);
 			response->headers = headers;
 		}
 		if (i == 2) {
@@ -208,10 +208,10 @@ int request(struct Http http, struct Http *response) {
 			}
 			payload[j] = '\0';
 			response->payload = payload;
-			logger("DEBUG", "Parsed the following response headers...");
-			logger("DEBUG", response->headers);
-			logger("DEBUG", "Parsed the following response payload...");
-			logger("DEBUG", response->payload);
+			logger(DEBUG, "Parsed the following response headers...");
+			logger(DEBUG, response->headers);
+			logger(DEBUG, "Parsed the following response payload...");
+			logger(DEBUG, response->payload);
 			break;
 		}
 	}
@@ -237,8 +237,8 @@ int create_connection(struct Http http) {
 	struct addrinfo *hosts;
 	int err = getaddrinfo(http.host, http.port, &config, &hosts);
 	if (err != 0) {
-		logger("ERROR", "getaddrinfo failed...");
-		logger("ERROR", (char *)gai_strerror(err));
+		logger(ERROR, "getaddrinfo failed...");
+		logger(ERROR, (char *)gai_strerror(err));
 		return -1;
 	}
 
@@ -253,7 +253,7 @@ int create_connection(struct Http http) {
 			char err_msg[SMALL];
 			int ret = snprintf(err_msg, sizeof(char) * SMALL, "unable to make socket %i for %s because %s\n", fd, host_info, strerror(errno));
 			handle_snprintf(ret, sizeof(char) * SMALL);
-			logger("WARN", err_msg);
+			logger(WARN, err_msg);
 			perror("socket error");
 			hosts = hosts->ai_next;
 			continue;
@@ -264,7 +264,7 @@ int create_connection(struct Http http) {
 			char err_msg[SMALL];
 			int ret = snprintf(err_msg, sizeof(char) * SMALL, "socket %i connect to %s failed because %s\n", fd, host_info, strerror(errno));
 			handle_snprintf(ret, sizeof(char) * SMALL);
-			logger("WARN", err_msg);
+			logger(WARN, err_msg);
 			perror("connect error");
 			hosts = hosts->ai_next;
 			close(fd);
@@ -275,7 +275,7 @@ int create_connection(struct Http http) {
 		char msg[LARGE];
 		int ret = snprintf(msg, sizeof(char) * LARGE, "Successfully made a connection to host %s\n%s\n", http.host, sockaddr_tostring(hosts->ai_addr, host_info));
 		handle_snprintf(ret, sizeof(char) * LARGE);
-		logger("DEBUG", msg);
+		logger(DEBUG, msg);
 		break;
 	}
 	return fd;
@@ -349,19 +349,19 @@ char* recv_request(int fd, char *buffer, size_t length, int flags) {
 
 // Send data to client 
 int write_request(int fd, char *buffer) {
-	logger("DEBUG", "Sending request...");
-	logger("DEBUG", buffer);
+	logger(DEBUG, "Sending request...");
+	logger(DEBUG, buffer);
 	int bytes = 0;
 	if((bytes = write(fd, buffer, strlen(buffer) * sizeof(char))) == -1) {
-		logger("ERROR", "write_request");
+		logger(ERROR, "write_request");
 		perror("write");
 		return -1;
 	}
 	if (bytes < strlen(buffer) * sizeof(char)) {
-		logger("ERROR", "Did not print entire buffer\n");
+		logger(ERROR, "Did not print entire buffer\n");
 		return -1;
 	}
-	logger("DEBUG", "Done sending request...\n");
+	logger(DEBUG, "Done sending request...\n");
 	return 0;
 }
 
@@ -443,7 +443,7 @@ void print_callstack() {
 	 */
 	char **stack = backtrace_symbols(buf, stack_size);
 	for (int i = 0; i < stack_size; ++i) {
-		logger("ERROR", stack[i]);
+		logger(ERROR, stack[i]);
 	}
 	/**
 	 * backtrace_symbols allocates memory for array of human readable strings using malloc
@@ -469,7 +469,7 @@ void handle_snprintf(int ret, size_t size) {
 		char msg[LARGE];
 		int ret = snprintf(msg, sizeof(char) * LARGE, "snprintf error %s", msg);
 		handle_snprintf(ret, sizeof(char) * LARGE);
-		logger("ERROR", msg);
+		logger(ERROR, msg);
 		print_callstack();
 	}
 
@@ -537,9 +537,20 @@ void print_host(struct addrinfo *addy_info) {
 	}
 }
 
-void logger(char* level, char* message) {
-	int enable_logging = 1;
-	if (enable_logging) {
-		printf("%s: %s\n", level, message);
+void logger(int level, char* message) {
+	if (LOG_LEVEL < level) {
+		if (level == TRACE) {
+			printf("TRACE: %s\n", message);
+		} else if (level == DEBUG) {
+			printf("DEBUG: %s\n", message);
+		} else if (level == INFO) {
+			printf("INFO: %s\n", message);
+		} else if (level == WARN) {
+			fprintf(stderr, "WARN: %s\n", message);
+		} else if (level == ERROR) {
+			fprintf(stderr, "ERROR: %s\n", message);
+		} else {
+			printf("%i: %s", level, message);
+		}
 	}
 }
