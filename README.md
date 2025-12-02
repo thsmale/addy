@@ -2,16 +2,16 @@
 
 ## Run
 Assumes machine running UNIX system, macOS, or linux distribution.
-Will create a server listening on http://localhost:3000 by default.
-Will create a client that sends a request to a server and prints out the response.
+Will create a addy web server listening on http://localhost:3000 by default.
+Will create a addy http client that sends a request to the addy web server and prints out the response.
 
 ```
 git clone https://github.com/thsmale/addy
 cd addy/examples
 
-chmod u+x client server
-./client
-./server
+chmod u+x client.sh server.sh
+./server.sh
+./client.sh
 ```
 
 ## Usage
@@ -55,15 +55,19 @@ $ export PORT=3000
 ```
 
 ### hapi
-hapi is web application server framework for HTTP that can create HTTP requests and receive HTTP requests.
+[hapi](https://hapi.dev/) is web application server framework for HTTP that can create HTTP requests and receive HTTP requests.
+Since this is a reliable framework, it is used to test the functionality of the addy HTTP web server and requests.
 
 ```
-./server
+# Start a test addy server to receive HTTP requests
+cd examples
+./server.sh
+# Testing the addy HTTP web server
 cd test/hapi
-# Testing the HTTP addy server
+npm i
 npm run test-server
-# Testing HTTP addy requests
+# Testing addy HTTP requests
 node server.js
-chmod u+x test-client
-./test-client
+chmod u+x test-client.sh
+./test-client.sh
 ```
